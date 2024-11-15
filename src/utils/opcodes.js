@@ -64,6 +64,10 @@ const implOpcode = {
     },
     SET: function () {
         const dest = this.readByte(), src = this.readByte();
+        this.write(dest, src);
+    },
+    SET_REF: function () {
+        const dest = this.readByte(), src = this.readByte();
         this.write(dest, this.read(src));
     },
     EQ: function () {

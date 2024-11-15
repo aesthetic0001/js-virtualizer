@@ -41,6 +41,8 @@ const opNames = [
     // memory
     // [dest, src]
     "SET",
+    // [dest, [src]]
+    "SET_REF",
 
     // comparison
     // [dest, left, right]
