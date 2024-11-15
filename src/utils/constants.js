@@ -97,6 +97,8 @@ for (let i = 0; i < opNames.length; i++) {
 }
 
 module.exports = {
+    registerNames,
     registers,
+    opNames,
     opcodes
 }

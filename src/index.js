@@ -1,5 +1,12 @@
-const {registers, opcodes} = require("./utils/constants");
+const {registers, opcodes, opNames} = require("./utils/constants");
 const implOpcode = require("./utils/opcodes");
+const debug = true
+
+function vmlog(message) {
+    if (debug) {
+        console.log(message)
+    }
+}
 
 // compiler is expected to load all dependencies into registers prior to future execution
 
@@ -40,21 +47,27 @@ class JSVM {
     }
 
     readByte() {
-        return this.code[this.read(registers.INSTRUCTION_POINTER++)]
+        const byte = this.code[registers.INSTRUCTION_POINTER++]
+        // vmlog(`JSVM > Read byte (IP = ${registers.INSTRUCTION_POINTER - 1}): ${byte.toString(16)}`)
+        return byte
     }
 
     readArray() {
         const length = this.readByte()
         const array = []
         for (let i = 0; i < length; i++) {
+            // these should be registers to loaded values
             array.push(this.readByte())
         }
+        vmlog(`JSVM > Read array of length ${length}: ${array}`)
         return array
     }
 
     // js integers are 32-bit signed
     readDWORD() {
-        return this.readByte() << 24 | this.readByte() << 16 | this.readByte() << 8 | this.readByte()
+        const dword = this.readByte() << 24 | this.readByte() << 16 | this.readByte() << 8 | this.readByte()
+        vmlog(`JSVM > Read DWORD: ${dword}`)
+        return dword
     }
 
     // taken from: https://github.com/jwillbold/rusty-jsyc/blob/master/vm/vm.js#L403
@@ -83,6 +96,7 @@ class JSVM {
         for (let i = 0, val = 1; i < significandBin.length; ++i, val /= 2) {
             significand += val * parseInt(significandBin.charAt(i));
         }
+        vmlog(`JSVM > Read float: ${sign * significand * Math.pow(2, exponent)}`)
         return sign * significand * Math.pow(2, exponent);
     }
 
@@ -92,12 +106,14 @@ class JSVM {
         for (let i = 0; i < length; i++) {
             str += String.fromCharCode(this.readByte())
         }
+        vmlog(`JSVM > Read string of length ${length}: ${str}`)
         return str
     }
 
     run() {
         while (this.read(registers.STATUS)) {
             const opcode = this.readByte()
+            vmlog(`JSVM > [IP = ${registers.INSTRUCTION_POINTER - 1}]: Executing ${opNames[opcode]}`)
             this.opcodes[opcode]()
         }
     }
