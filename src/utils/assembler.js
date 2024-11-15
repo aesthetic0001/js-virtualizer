@@ -95,6 +95,52 @@ function encodeString(str) {
     return Buffer.concat([encodeDWORD(length), data]);
 }
 
+function encodeObject(obj) {
+    // todo: implement
+}
+
+function encodeArray(array, offset) {
+    const length = array.length;
+    // register, value
+    const references = []
+    const dependencies = {}
+
+    let register = offset;
+    for (let i = 0; i < length; i++) {
+        const value = array[i];
+        if (Buffer.isBuffer(value)) {
+            // buffer to register
+            const register = value.readUInt8(0);
+            references.push(register);
+            continue
+        }
+        switch (typeof value) {
+            case 'string': {
+                references.push(register);
+                dependencies[register] = encodeString(value);
+                break;
+            }
+            case 'number': {
+                const encodedValue = Number.isInteger(value) ? encodeDWORD(value) : encodeFloat(value);
+                references.push(register);
+                dependencies[register] = encodedValue;
+                break;
+            }
+            case 'object':
+                // todo: handle later, need to encode object, preload references in advance
+                break;
+        }
+        register++;
+    }
+
+    const lengthBuffer = encodeDWORD(length);
+    const data = Buffer.concat(references);
+    return {
+        encoded: Buffer.concat([lengthBuffer, data]),
+        dependencies
+    }
+}
+
 module.exports = {
     Opcode,
     VMChunk,

@@ -25,19 +25,6 @@ class JSVM {
         })
     }
 
-    loadFromString(code, format) {
-        switch (format) {
-            case 'base64':
-                this.code = Buffer.from(code, 'base64')
-                break
-            case 'hex':
-                this.code = Buffer.from(code, 'hex')
-                break
-            default:
-                this.code = Buffer.from(code)
-        }
-    }
-
     read(register) {
         return this.registers[register]
     }
@@ -110,11 +97,36 @@ class JSVM {
         return str
     }
 
+    loadFromString(code, format) {
+        switch (format) {
+            case 'base64':
+                this.code = Buffer.from(code, 'base64')
+                break
+            case 'hex':
+                this.code = Buffer.from(code, 'hex')
+                break
+            default:
+                this.code = Buffer.from(code)
+        }
+    }
+
+    loadDependencies(dependencies) {
+        Object.keys(dependencies).forEach((key) => {
+            vmlog(`JSVM > Loading dependency ${key}: ${dependencies[key]}`)
+            this.write(parseInt(key), dependencies[key])
+        })
+    }
+
     run() {
         while (this.read(registers.STATUS)) {
             const opcode = this.readByte()
             vmlog(`JSVM > [IP = ${registers.INSTRUCTION_POINTER - 1}]: Executing ${opNames[opcode]}`)
-            this.opcodes[opcode]()
+            try {
+                this.opcodes[opcode]()
+            } catch (e) {
+                vmlog(`JSVM > ${e.toString()} at IP = ${registers.INSTRUCTION_POINTER}`)
+                this.write(registers.STATUS, 0)
+            }
         }
     }
 }

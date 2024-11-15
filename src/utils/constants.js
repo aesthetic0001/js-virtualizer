@@ -21,6 +21,8 @@ const opNames = [
     "LOAD_STRING",
     // [register, value]
     "LOAD_ARRAY",
+    // [register, keys, values]
+    "LOAD_OBJECT",
 
     // functions
     // [src, dst, functhis (identity), ...args]
@@ -43,6 +45,12 @@ const opNames = [
     "SET",
     // [dest, [src]]
     "SET_REF",
+    // [[object], prop, src]
+    "SET_PROP",
+    // [[object], props, srcs]
+    "SET_PROPS",
+    // [external_ref, src]
+    "WRITE_EXT",
 
     // comparison
     // [dest, left, right]
