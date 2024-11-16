@@ -1,7 +1,7 @@
-const JSVM = require('../src/index.js');
+const JSVM = require('../src/vm.js');
 const {VMChunk, Opcode, encodeString, encodeFloat, encodeArray, encodeArrayRegisters, encodeDWORD} = require("../src/utils/assembler");
 const {registers} = require("../src/utils/constants");
-const assert = require("node:assert");
+const test = require("node:test");
 
 const VM = new JSVM();
 const chunk = new VMChunk();
@@ -16,7 +16,6 @@ chunk.append(new Opcode("LOAD_FLOAT", 0, encodeFloat(randFloat1)));
 chunk.append(new Opcode("LOAD_FLOAT", 1, encodeFloat(randFloat2)));
 chunk.append(new Opcode("ADD", 0, 0, 1));
 chunk.append(new Opcode("FUNC_CALL", 4, registers.VOID, 2, encodeArrayRegisters([0])));
-chunk.append(new Opcode("PRINT", 0));
 
 // for int operations
 const randInt1 = Math.floor(Math.random() * 100);
@@ -25,7 +24,6 @@ chunk.append(new Opcode("LOAD_DWORD", 0, encodeDWORD(randInt1)));
 chunk.append(new Opcode("LOAD_DWORD", 1, encodeDWORD(randInt2)));
 chunk.append(new Opcode("SUBTRACT", 0, 0, 1));
 chunk.append(new Opcode("FUNC_CALL", 4, registers.VOID, 2, encodeArrayRegisters([0])));
-chunk.append(new Opcode("PRINT", 0));
 
 const bytecode = chunk.toBytes().toString('base64')
 
@@ -34,7 +32,11 @@ console.log(chunk.toString())
 VM.loadFromString(bytecode, "base64");
 VM.run();
 
-console.assert(VM.registers[2][0] === randFloat1 + randFloat2, "Floats do not match");
-console.assert(VM.registers[2][1] === randInt1 - randInt2, "Integers do not match");
+test('Float Addition', () => {
+    expect(VM.registers[2][0]).toBe(randFloat1 + randFloat2);
+});
 
-console.log('Math Test Passed')
+test('Integer Subtraction', () => {
+    expect(VM.registers[2][1]).toBe(randInt1 - randInt2);
+});
+

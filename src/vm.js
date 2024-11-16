@@ -1,6 +1,6 @@
 const {registers, opcodes, opNames} = require("./utils/constants");
 const implOpcode = require("./utils/opcodes");
-const debug = true
+const debug = process.env.JSVM_DEBUG === 'true'
 
 function vmlog(message) {
     if (debug) {
