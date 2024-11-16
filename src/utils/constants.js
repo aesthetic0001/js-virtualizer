@@ -8,7 +8,7 @@ const registerNames = [
 const registers = {}
 
 for (let i = 0; i < registerNames.length; i++) {
-    registers[registerNames[i]] = 256 + i
+    registers[registerNames[i]] = 128 + i
 }
 
 const opNames = [
