@@ -16,11 +16,9 @@ class JSVM {
         this.registers = {}
         this.opcodes = {}
         this.code = null
-        this.registers[registers.INSTRUCTION_POINTER] = 0
-        this.registers[registers.STATUS] = 1
-        this.registers[registers.VOID] = 0
-
-        // implementation of opcodes
+        this.write(registers.INSTRUCTION_POINTER, 0)
+        this.write(registers.STATUS, 1)
+        this.write(registers.VOID, 0)
         Object.keys(opcodes).forEach((opcode) => {
             this.opcodes[opcodes[opcode]] = implOpcode[opcode].bind(this)
         })
@@ -35,7 +33,8 @@ class JSVM {
     }
 
     readByte() {
-        const byte = this.code[registers.INSTRUCTION_POINTER++]
+        const byte = this.code[this.read(registers.INSTRUCTION_POINTER)]
+        this.write(registers.INSTRUCTION_POINTER, this.read(registers.INSTRUCTION_POINTER) + 1)
         // vmlog(`JSVM > Read byte (IP = ${registers.INSTRUCTION_POINTER - 1}): ${byte.toString(16)}`)
         return byte
     }
@@ -121,11 +120,11 @@ class JSVM {
     run() {
         while (this.read(registers.STATUS)) {
             const opcode = this.readByte()
-            vmlog(`JSVM > [IP = ${registers.INSTRUCTION_POINTER - 1}]: Executing ${opNames[opcode]}`)
+            vmlog(`JSVM > [IP = ${this.read(registers.INSTRUCTION_POINTER) - 1}]: Executing ${opNames[opcode]}`)
             try {
                 this.opcodes[opcode]()
             } catch (e) {
-                vmlog(`JSVM > ${e.toString()} at IP = ${registers.INSTRUCTION_POINTER}`)
+                vmlog(`JSVM > ${e.toString()} at IP = ${this.read(registers.INSTRUCTION_POINTER)}`)
                 this.write(registers.STATUS, 0)
             }
         }

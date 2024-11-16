@@ -32,8 +32,6 @@ const implOpcode = {
     FUNC_CALL: function () {
         const fn = this.readByte(), dst = this.readByte(),
             funcThis = this.readByte(), args = this.readArray();
-        console.log(this.registers)
-        console.log(fn, dst, funcThis, args);
         const res = this.read(fn).apply(this.read(funcThis), args);
         this.write(dst, res);
     },
@@ -99,8 +97,6 @@ const implOpcode = {
     },
     GET_PROP: function () {
         const dest = this.readByte(), object = this.readByte(), prop = this.readByte();
-        console.log(this.registers)
-        console.log(dest, object, prop)
         this.write(dest, this.read(object)[this.read(prop)]);
     },
     EQ: function () {
