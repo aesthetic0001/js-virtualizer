@@ -25,7 +25,7 @@ const implOpcode = {
         const register = this.readByte(), keys = this.readArray(), values = this.readArray();
         const obj = {};
         for (let i = 0; i < keys.length; i++) {
-            obj[this.read(keys[i])] = this.read(values[i]);
+            obj[keys[i]] = values[i]
         }
         this.write(register, obj);
     },
