@@ -5,10 +5,13 @@ const registerNames = [
     "VOID"
 ]
 
+const reservedNames = new Set(registerNames)
+reservedNames.delete("VOID")
+
 const registers = {}
 
 for (let i = 0; i < registerNames.length; i++) {
-    registers[registerNames[i]] = 128 + i
+    registers[registerNames[i]] = i
 }
 
 const opNames = [
@@ -112,6 +115,7 @@ for (let i = 0; i < opNames.length; i++) {
 
 module.exports = {
     registerNames,
+    reservedNames,
     registers,
     opNames,
     opcodes

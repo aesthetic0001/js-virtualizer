@@ -18,57 +18,46 @@ const randFloat2 = Math.random() * 100;
 const randInt1 = Math.floor(Math.random() * 100);
 const randInt2 = Math.floor(Math.random() * 100);
 
-chunk.append(new Opcode("LOAD_ARRAY", 2, encodeArrayRegisters([])));
-chunk.append(new Opcode("LOAD_STRING", 3, encodeString("push")));
-chunk.append(new Opcode("GET_PROP", 4, 2, 3));
-chunk.append(new Opcode("LOAD_FLOAT", 0, encodeFloat(randFloat1)));
-chunk.append(new Opcode("LOAD_FLOAT", 1, encodeFloat(randFloat2)));
+chunk.append(new Opcode("LOAD_ARRAY", 3, encodeArrayRegisters([])));
+chunk.append(new Opcode("LOAD_STRING", 4, encodeString("push")));
+chunk.append(new Opcode("GET_PROP", 5, 3, 4));
+chunk.append(new Opcode("LOAD_FLOAT", 6, encodeFloat(randFloat1)));
+chunk.append(new Opcode("LOAD_FLOAT", 7, encodeFloat(randFloat2)));
+chunk.append(new Opcode("LOAD_DWORD", 8, encodeDWORD(randInt1)));
+chunk.append(new Opcode("LOAD_DWORD", 9, encodeDWORD(randInt2)));
 
-chunk.append(new Opcode("ADD", 5, 0, 1));
-chunk.append(new Opcode("FUNC_CALL", 4, registers.VOID, 2, encodeArrayRegisters([5])));
+chunk.append(new Opcode("ADD", 10, 6, 7));
+chunk.append(new Opcode("FUNC_CALL", 5, registers.VOID, 3, encodeArrayRegisters([10])));
+chunk.append(new Opcode("SUBTRACT", 10, 6, 7));
+chunk.append(new Opcode("FUNC_CALL", 5, registers.VOID, 3, encodeArrayRegisters([10])));
+chunk.append(new Opcode("MULTIPLY", 10, 6, 7));
+chunk.append(new Opcode("FUNC_CALL", 5, registers.VOID, 3, encodeArrayRegisters([10])));
+chunk.append(new Opcode("DIVIDE", 10, 6, 7));
+chunk.append(new Opcode("FUNC_CALL", 5, registers.VOID, 3, encodeArrayRegisters([10])));
+chunk.append(new Opcode("MODULO", 10, 6, 7));
+chunk.append(new Opcode("FUNC_CALL", 5, registers.VOID, 3, encodeArrayRegisters([10])));
+chunk.append(new Opcode("POWER", 10, 6, 7));
+chunk.append(new Opcode("FUNC_CALL", 5, registers.VOID, 3, encodeArrayRegisters([10])));
 
-chunk.append(new Opcode("SUBTRACT", 5, 0, 1));
-chunk.append(new Opcode("FUNC_CALL", 4, registers.VOID, 2, encodeArrayRegisters([5])));
-
-chunk.append(new Opcode("MULTIPLY", 5, 0, 1));
-chunk.append(new Opcode("FUNC_CALL", 4, registers.VOID, 2, encodeArrayRegisters([5])));
-
-chunk.append(new Opcode("DIVIDE", 5, 0, 1));
-chunk.append(new Opcode("FUNC_CALL", 4, registers.VOID, 2, encodeArrayRegisters([5])));
-
-chunk.append(new Opcode("MODULO", 5, 0, 1));
-chunk.append(new Opcode("FUNC_CALL", 4, registers.VOID, 2, encodeArrayRegisters([5])));
-
-chunk.append(new Opcode("POWER", 5, 0, 1));
-chunk.append(new Opcode("FUNC_CALL", 4, registers.VOID, 2, encodeArrayRegisters([5])));
-
-chunk.append(new Opcode("LOAD_DWORD", 0, encodeDWORD(randInt1)));
-chunk.append(new Opcode("LOAD_DWORD", 1, encodeDWORD(randInt2)));
-
-chunk.append(new Opcode("ADD", 5, 0, 1));
-chunk.append(new Opcode("FUNC_CALL", 4, registers.VOID, 2, encodeArrayRegisters([5])));
-
-chunk.append(new Opcode("SUBTRACT", 5, 0, 1));
-chunk.append(new Opcode("FUNC_CALL", 4, registers.VOID, 2, encodeArrayRegisters([5])));
-
-chunk.append(new Opcode("MULTIPLY", 5, 0, 1));
-chunk.append(new Opcode("FUNC_CALL", 4, registers.VOID, 2, encodeArrayRegisters([5])));
-
-chunk.append(new Opcode("DIVIDE", 5, 0, 1));
-chunk.append(new Opcode("FUNC_CALL", 4, registers.VOID, 2, encodeArrayRegisters([5])));
-
-chunk.append(new Opcode("MODULO", 5, 0, 1));
-chunk.append(new Opcode("FUNC_CALL", 4, registers.VOID, 2, encodeArrayRegisters([5])));
-
-chunk.append(new Opcode("POWER", 5, 0, 1));
-chunk.append(new Opcode("FUNC_CALL", 4, registers.VOID, 2, encodeArrayRegisters([5])));
+chunk.append(new Opcode("ADD", 10, 8, 9));
+chunk.append(new Opcode("FUNC_CALL", 5, registers.VOID, 3, encodeArrayRegisters([10])));
+chunk.append(new Opcode("SUBTRACT", 10, 8, 9));
+chunk.append(new Opcode("FUNC_CALL", 5, registers.VOID, 3, encodeArrayRegisters([10])));
+chunk.append(new Opcode("MULTIPLY", 10, 8, 9));
+chunk.append(new Opcode("FUNC_CALL", 5, registers.VOID, 3, encodeArrayRegisters([10])));
+chunk.append(new Opcode("DIVIDE", 10, 8, 9));
+chunk.append(new Opcode("FUNC_CALL", 5, registers.VOID, 3, encodeArrayRegisters([10])));
+chunk.append(new Opcode("MODULO", 10, 8, 9));
+chunk.append(new Opcode("FUNC_CALL", 5, registers.VOID, 3, encodeArrayRegisters([10])));
+chunk.append(new Opcode("POWER", 10, 8, 9));
+chunk.append(new Opcode("FUNC_CALL", 5, registers.VOID, 3, encodeArrayRegisters([10])));
 
 const bytecode = chunk.toBytes().toString('base64')
 
 VM.loadFromString(bytecode, "base64");
 VM.run();
 
-const results = VM.registers[2]
+const results = VM.registers[3]
 
 test('Float Addition', () => {
     expect(results[0]).toBe(randFloat1 + randFloat2);

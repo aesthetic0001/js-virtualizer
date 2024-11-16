@@ -170,7 +170,7 @@ const implOpcode = {
     NOP: function () {
     },
     END: function () {
-        this.write(registers.STATUS, 0);
+        this.registers[registers.STATUS] = 0;
     },
     PRINT: function () {
         console.log(this.read(this.readByte()));

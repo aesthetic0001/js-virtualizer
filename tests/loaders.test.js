@@ -16,32 +16,32 @@ const randInt = Math.floor(Math.random() * 100);
 const randFloat = Math.random() * 100;
 const randString = Math.random().toString(36).substring(2);
 
-chunk.append(new Opcode("LOAD_BYTE", 0, randByte));
-chunk.append(new Opcode("LOAD_DWORD", 1, encodeDWORD(randInt)));
-chunk.append(new Opcode("LOAD_FLOAT", 2, encodeFloat(randFloat)));
-chunk.append(new Opcode("LOAD_STRING", 3, encodeString(randString)));
-chunk.append(new Opcode("LOAD_ARRAY", 4, encodeArrayRegisters([])));
+chunk.append(new Opcode("LOAD_BYTE", 3, randByte));
+chunk.append(new Opcode("LOAD_DWORD", 4, encodeDWORD(randInt)));
+chunk.append(new Opcode("LOAD_FLOAT", 5, encodeFloat(randFloat)));
+chunk.append(new Opcode("LOAD_STRING", 6, encodeString(randString)));
+chunk.append(new Opcode("LOAD_ARRAY", 7, encodeArrayRegisters([])));
 
 const bytecode = chunk.toBytes().toString('base64')
 VM.loadFromString(bytecode, 'base64');
 VM.run()
 
 test('Load byte', () => {
-    expect(VM.registers[0]).toBe(randByte);
+    expect(VM.registers[3]).toBe(randByte);
 })
 
 test('Load dword', () => {
-    expect(VM.registers[1]).toBe(randInt);
+    expect(VM.registers[4]).toBe(randInt);
 })
 
 test('Load float', () => {
-    expect(VM.registers[2]).toBe(randFloat);
+    expect(VM.registers[5]).toBe(randFloat);
 })
 
 test('Load string', () => {
-    expect(VM.registers[3]).toBe(randString);
+    expect(VM.registers[6]).toBe(randString);
 })
 
 test('Load array', () => {
-    expect(VM.registers[4]).toEqual([]);
+    expect(VM.registers[7]).toEqual([]);
 })

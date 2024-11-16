@@ -1,4 +1,4 @@
-const {registers, opcodes, opNames} = require("./utils/constants");
+const {registers, opcodes, opNames, registerNames, reservedNames} = require("./utils/constants");
 const implOpcode = require("./utils/opcodes");
 const debug = process.env.JSVM_DEBUG === 'true'
 
@@ -16,9 +16,9 @@ class JSVM {
         this.registers = {}
         this.opcodes = {}
         this.code = null
-        this.write(registers.INSTRUCTION_POINTER, 0)
-        this.write(registers.STATUS, 1)
-        this.write(registers.VOID, 0)
+        this.registers[registers.INSTRUCTION_POINTER] = 0
+        this.registers[registers.STATUS] = 1
+        this.registers[registers.VOID] = 0
         Object.keys(opcodes).forEach((opcode) => {
             this.opcodes[opcodes[opcode]] = implOpcode[opcode].bind(this)
         })
@@ -29,12 +29,15 @@ class JSVM {
     }
 
     write(register, value) {
+        if (reservedNames.has(registerNames[register])) {
+            throw new Error(`Tried to modify reserved register: ${registerNames[register]} (${register})`)
+        }
         this.registers[register] = value
     }
 
     readByte() {
         const byte = this.code[this.read(registers.INSTRUCTION_POINTER)]
-        this.write(registers.INSTRUCTION_POINTER, this.read(registers.INSTRUCTION_POINTER) + 1)
+        this.registers[registers.INSTRUCTION_POINTER] += 1;
         // vmlog(`JSVM > Read byte (IP = ${registers.INSTRUCTION_POINTER - 1}): ${byte.toString(16)}`)
         return byte
     }
@@ -125,7 +128,7 @@ class JSVM {
                 this.opcodes[opcode]()
             } catch (e) {
                 vmlog(`JSVM > ${e.toString()} at IP = ${this.read(registers.INSTRUCTION_POINTER)}`)
-                this.write(registers.STATUS, 0)
+                this.registers[registers.STATUS] = 0
             }
         }
     }
