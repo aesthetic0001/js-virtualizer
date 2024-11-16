@@ -18,6 +18,7 @@ class JSVM {
         this.code = null
         this.registers[registers.INSTRUCTION_POINTER] = 0
         this.registers[registers.STATUS] = 1
+        this.registers[registers.VOID] = 0
 
         // implementation of opcodes
         Object.keys(opcodes).forEach((opcode) => {
@@ -44,7 +45,7 @@ class JSVM {
         const array = []
         for (let i = 0; i < length; i++) {
             // these should be registers to loaded values
-            array.push(this.readByte())
+            array.push(this.read(this.readByte()))
         }
         vmlog(`JSVM > Read array of length ${length}: ${array}`)
         return array

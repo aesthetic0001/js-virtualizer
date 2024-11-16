@@ -1,6 +1,8 @@
 const registerNames = [
     "INSTRUCTION_POINTER",
     "STATUS",
+    // for void functions/operations
+    "VOID"
 ]
 
 const registers = {}
@@ -25,7 +27,7 @@ const opNames = [
     "LOAD_OBJECT",
 
     // functions
-    // [src, dst, functhis (identity), ...args]
+    // [fn, dst, functhis (identity), ...args]
     "FUNC_CALL",
 
     // branching
@@ -49,6 +51,8 @@ const opNames = [
     "SET_PROP",
     // [[object], props, srcs]
     "SET_PROPS",
+    // [dest, [object], prop]
+    "GET_PROP",
     // [external_ref, src]
     "WRITE_EXT",
 

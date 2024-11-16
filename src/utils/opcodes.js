@@ -30,9 +30,11 @@ const implOpcode = {
         this.write(register, obj);
     },
     FUNC_CALL: function () {
-        const src = this.readByte(), dst = this.readByte(),
+        const fn = this.readByte(), dst = this.readByte(),
             funcThis = this.readByte(), args = this.readArray();
-        const res = this.read(this.read(src)).apply(this.read(funcThis), args);
+        console.log(this.registers)
+        console.log(fn, dst, funcThis, args);
+        const res = this.read(fn).apply(this.read(funcThis), args);
         this.write(dst, res);
     },
     JUMP_UNCONDITIONAL: function () {
@@ -94,6 +96,12 @@ const implOpcode = {
         for (let i = 0; i < props.length; i++) {
             obj[this.read(props[i])] = this.read(srcs[i]);
         }
+    },
+    GET_PROP: function () {
+        const dest = this.readByte(), object = this.readByte(), prop = this.readByte();
+        console.log(this.registers)
+        console.log(dest, object, prop)
+        this.write(dest, this.read(object)[this.read(prop)]);
     },
     EQ: function () {
         const dest = this.readByte(), left = this.readByte(), right = this.readByte();

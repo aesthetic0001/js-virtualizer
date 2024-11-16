@@ -105,7 +105,7 @@ function encodeArray(array, offset) {
     const references = []
     const dependencies = {}
 
-    let register = offset;
+    let register = offset + 1;
     for (let i = 0; i < length; i++) {
         const value = array[i];
         if (Buffer.isBuffer(value)) {
@@ -141,10 +141,23 @@ function encodeArray(array, offset) {
     }
 }
 
+function encodeArrayRegisters(array) {
+    const length = array.length;
+    const encoded = [
+        Buffer.from([length])
+    ]
+    for (let i = 0; i < length; i++) {
+        encoded.push(Buffer.from([array[i]]))
+    }
+    return Buffer.concat(encoded);
+}
+
 module.exports = {
     Opcode,
     VMChunk,
     encodeString,
     encodeFloat,
-    encodeDWORD
+    encodeDWORD,
+    encodeArray,
+    encodeArrayRegisters
 }
