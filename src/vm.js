@@ -13,7 +13,8 @@ function vmlog(message) {
 // a JSVM instance. a new one should be created for every virtualized function so that they are able to run concurrently without interfering with each other
 class JSVM {
     constructor() {
-        this.registers = {}
+        this.registers = new Array(256).fill(null)
+        this.regstack = []
         this.opcodes = {}
         this.code = null
         this.registers[registers.INSTRUCTION_POINTER] = 0
@@ -40,6 +41,15 @@ class JSVM {
         this.registers[registers.INSTRUCTION_POINTER] += 1;
         // vmlog(`JSVM > Read byte (IP = ${registers.INSTRUCTION_POINTER - 1}): ${byte.toString(16)}`)
         return byte
+    }
+
+    readArrayRegisters() {
+        const length = this.readByte()
+        const array = []
+        for (let i = 0; i < length; i++) {
+            array.push(this.readByte())
+        }
+        return array
     }
 
     readArray() {

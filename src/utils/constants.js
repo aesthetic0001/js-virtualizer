@@ -30,8 +30,17 @@ const opNames = [
     "LOAD_OBJECT",
 
     // functions
+
+    // - external functions -
     // [fn, dst, functhis (identity), ...args]
     "FUNC_CALL",
+
+    // - internal functions (defined in bytecode) -
+    // argmap should be a list of functionreg: argreg
+    // [fn_pos, return_data_store_external, ...argmap]
+    "VFUNC_CALL",
+    // [return_data_store_internal]
+    "VFUNC_RETURN",
 
     // branching
     // [offset]

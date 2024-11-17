@@ -35,6 +35,27 @@ const implOpcode = {
         const res = this.read(fn).apply(this.read(funcThis), args);
         this.write(dst, res);
     },
+    VFUNC_CALL: function () {
+        const fnPos = this.readDWORD(),
+            returnDataStore = this.readByte(),
+            argMap = this.readArrayRegisters();
+        const IP = this.read(registers.INSTRUCTION_POINTER);
+        // store current register state for restoration
+        this.regstack.push(this.registers.slice(), returnDataStore);
+        // convert relative register positions to function necessary
+        // (abs, rel, abs, rel, ...)
+        for (let i = 0; i < argMap.length; i += 2) {
+            this.write(argMap[i], this.read(argMap[i + 1]));
+        }
+        this.write(registers.INSTRUCTION_POINTER, IP + fnPos);
+    },
+    VFUNC_RETURN: function () {
+        const internalReturnReg = this.readByte();
+        const retValue = this.read(internalReturnReg);
+        const [registers, returnDataStore] = this.regstack.pop();
+        this.registers = registers;
+        this.write(returnDataStore, retValue);
+    },
     JUMP_UNCONDITIONAL: function () {
         const offset = this.readDWORD();
         const cur = this.read(registers.INSTRUCTION_POINTER);
