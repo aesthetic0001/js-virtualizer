@@ -69,14 +69,14 @@ const implOpcode = {
     JUMP_EQ: function () {
         const cur = this.read(registers.INSTRUCTION_POINTER);
         const register = this.readByte(), offset = this.readDWORD();
-        if (this.read(register) === 0) {
+        if (this.read(register)) {
             this.registers[registers.INSTRUCTION_POINTER] = cur + offset - 1;
         }
     },
     JUMP_NOT_EQ: function () {
         const cur = this.read(registers.INSTRUCTION_POINTER);
         const register = this.readByte(), offset = this.readDWORD();
-        if (this.read(register) !== 0) {
+        if (!this.read(register)) {
             this.registers[registers.INSTRUCTION_POINTER] = cur + offset - 1;
         }
     },
