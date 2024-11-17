@@ -15,12 +15,21 @@ const chunk = new VMChunk();
 const randInt = Math.floor(Math.random() * 100);
 
 chunk.append(new Opcode("LOAD_DWORD", 3, encodeDWORD(randInt)));
-chunk.append(new Opcode("VFUNC_CALL", encodeDWORD(16), registers.VOID, encodeArrayRegisters([3, 3])));
+chunk.append(new Opcode("VFUNC_CALL", encodeDWORD(23), registers.VOID, encodeArrayRegisters([])));
+chunk.append(new Opcode("VFUNC_CALL", encodeDWORD(26), 4, encodeArrayRegisters([4, 3])));
 chunk.append(new Opcode("END"));
-chunk.append(new Opcode("PRINT", 3));
-chunk.append(new Opcode("VFUNC_RETURN", registers.VOID));
+chunk.append(new Opcode("VFUNC_RETURN", registers.VOID, encodeArrayRegisters([])));
+chunk.append(new Opcode("VFUNC_RETURN", 4, encodeArrayRegisters([])));
 
 const bytecode = chunk.toBytes(false).toString('base64')
-console.log(chunk.toString())
+
 VM.loadFromString(bytecode, 'base64');
 VM.run()
+
+test('VOID VFUNC_CALL', () => {
+    expect(VM.registers[registers.VOID]).toBe(0)
+})
+
+test('VFUNC_CALL (NO MUT)', () => {
+    expect(VM.registers[4]).toBe(randInt)
+})

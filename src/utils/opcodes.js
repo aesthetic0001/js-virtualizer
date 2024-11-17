@@ -40,7 +40,7 @@ const implOpcode = {
             returnDataStore = this.readByte(),
             argMap = this.readArrayRegisters();
         // store current register state for restoration
-        this.regstack.push(this.registers.slice(), returnDataStore);
+        this.regstack.push([this.registers.slice(), returnDataStore]);
         // convert relative register positions to function necessary
         // (abs, rel, abs, rel, ...)
         for (let i = 0; i < argMap.length; i += 2) {
@@ -50,9 +50,14 @@ const implOpcode = {
     },
     VFUNC_RETURN: function () {
         const internalReturnReg = this.readByte();
+        const scopedRegs = this.readArrayRegisters();
         const retValue = this.read(internalReturnReg);
         const [registers, returnDataStore] = this.regstack.pop();
-        this.registers = registers;
+        const doNotRestore = new Set(scopedRegs);
+        for (let i = 0; i < registers.length; i++) {
+            if (doNotRestore.has(i)) continue;
+            this.registers[i] = registers[i];
+        }
         this.write(returnDataStore, retValue);
     },
     JUMP_UNCONDITIONAL: function () {
