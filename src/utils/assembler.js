@@ -35,18 +35,28 @@ class Opcode {
 class VMChunk {
     constructor() {
         this.code = [];
+        this.hasCustomTerminator = false;
     }
 
     append(opcode) {
         this.code.push(opcode);
+        if (opcode.name === 'END') {
+            this.hasCustomTerminator = true;
+        }
     }
 
     toBytes() {
-        return Buffer.concat([...this.code.map(opcode => opcode.toBytes()), Buffer.from([opcodes.END])]);
+        return !this.hasCustomTerminator ? Buffer.concat([...this.code.map(opcode => opcode.toBytes()), Buffer.from([opcodes.END])]) : Buffer.concat(this.code.map(opcode => opcode.toBytes()));
     }
 
     toString() {
-        return this.code.map(opcode => opcode.toString()).join("\n");
+        const lines = this.code.map(opcode => opcode.toString());
+        const info = [
+            `Chunk length: ${this.code.length}`,
+            `Custom custom terminator: ${this.hasCustomTerminator}`,
+            `Total bytes: ${this.toBytes().length}`
+        ]
+        return [...info, ...lines].join('\n');
     }
 }
 

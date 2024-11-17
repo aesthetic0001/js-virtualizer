@@ -39,7 +39,6 @@ const implOpcode = {
         const fnPos = this.readDWORD(),
             returnDataStore = this.readByte(),
             argMap = this.readArrayRegisters();
-        const IP = this.read(registers.INSTRUCTION_POINTER);
         // store current register state for restoration
         this.regstack.push(this.registers.slice(), returnDataStore);
         // convert relative register positions to function necessary
@@ -47,7 +46,7 @@ const implOpcode = {
         for (let i = 0; i < argMap.length; i += 2) {
             this.write(argMap[i], this.read(argMap[i + 1]));
         }
-        this.write(registers.INSTRUCTION_POINTER, IP + fnPos);
+        this.registers[registers.INSTRUCTION_POINTER] = fnPos;
     },
     VFUNC_RETURN: function () {
         const internalReturnReg = this.readByte();
