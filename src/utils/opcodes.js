@@ -36,17 +36,18 @@ const implOpcode = {
         this.write(dst, res);
     },
     VFUNC_CALL: function () {
-        const fnPos = this.readDWORD(),
+        const cur = this.read(registers.INSTRUCTION_POINTER);
+        const offset = this.readDWORD(),
             returnDataStore = this.readByte(),
             argMap = this.readArrayRegisters();
         // store current register state for restoration
         this.regstack.push([this.registers.slice(), returnDataStore]);
-        // convert relative register positions to function necessary
+        // convert current register positions (rel) to function necessary registers (abs)
         // (abs, rel, abs, rel, ...)
         for (let i = 0; i < argMap.length; i += 2) {
             this.write(argMap[i], this.read(argMap[i + 1]));
         }
-        this.registers[registers.INSTRUCTION_POINTER] = fnPos;
+        this.registers[registers.INSTRUCTION_POINTER] = cur + offset - 1;
     },
     VFUNC_RETURN: function () {
         const internalReturnReg = this.readByte();
@@ -61,22 +62,22 @@ const implOpcode = {
         this.write(returnDataStore, retValue);
     },
     JUMP_UNCONDITIONAL: function () {
-        const offset = this.readDWORD();
         const cur = this.read(registers.INSTRUCTION_POINTER);
-        this.write(registers.INSTRUCTION_POINTER, cur + offset);
+        const offset = this.readDWORD();
+        this.registers[registers.INSTRUCTION_POINTER] = cur + offset - 1;
     },
     JUMP_EQ: function () {
+        const cur = this.read(registers.INSTRUCTION_POINTER);
         const register = this.readByte(), offset = this.readDWORD();
         if (this.read(register) === 0) {
-            const cur = this.read(registers.INSTRUCTION_POINTER);
-            this.write(registers.INSTRUCTION_POINTER, cur + offset);
+            this.registers[registers.INSTRUCTION_POINTER] = cur + offset - 1;
         }
     },
     JUMP_NOT_EQ: function () {
+        const cur = this.read(registers.INSTRUCTION_POINTER);
         const register = this.readByte(), offset = this.readDWORD();
         if (this.read(register) !== 0) {
-            const cur = this.read(registers.INSTRUCTION_POINTER);
-            this.write(registers.INSTRUCTION_POINTER, cur + offset);
+            this.registers[registers.INSTRUCTION_POINTER] = cur + offset - 1;
         }
     },
     TRY_CATCH: function () {
@@ -85,10 +86,10 @@ const implOpcode = {
             this.run();
         } catch (e) {
             const cur = this.read(registers.INSTRUCTION_POINTER);
-            this.write(registers.INSTRUCTION_POINTER, cur + catchOffset);
+            this.write(registers.INSTRUCTION_POINTER, cur + catchOffset - 1);
         } finally {
             const cur = this.read(registers.INSTRUCTION_POINTER);
-            this.write(registers.INSTRUCTION_POINTER, cur + finallyOffset);
+            this.write(registers.INSTRUCTION_POINTER, cur + finallyOffset - 1);
         }
     },
     THROW: function () {

@@ -37,7 +37,7 @@ const opNames = [
 
     // - internal functions (defined in bytecode) -
     // argmap should be a list of functionreg: argreg
-    // [fn_pos, return_data_store_external, ...argmap]
+    // [offset, return_data_store_external, ...argmap]
     "VFUNC_CALL",
     // scoped_regs is a list of registers that should not be restored as they are outside the scope of the function
     // [return_data_store_internal, ...scoped_regs]

@@ -50,10 +50,17 @@ class VMChunk {
     }
 
     toString() {
-        const lines = this.code.map(opcode => opcode.toString());
+        let IP = 0;
+        const lines = this.code.map(
+            (opcode) => {
+                const line = `[IP: ${IP}] - ${opcode.toString()}`;
+                IP += opcode.toBytes().length;
+                return line;
+            }
+        );
         const info = [
             `Chunk length: ${this.code.length}`,
-            `Custom custom terminator: ${this.hasCustomTerminator}`,
+            `Already has terminator: ${this.hasCustomTerminator}`,
             `Total bytes: ${this.toBytes().length}`
         ]
         return [...info, ...lines].join('\n');
