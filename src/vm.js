@@ -18,7 +18,6 @@ class JSVM {
         this.opcodes = {}
         this.code = null
         this.registers[registers.INSTRUCTION_POINTER] = 0
-        this.registers[registers.STATUS] = 1
         this.registers[registers.VOID] = 0
         Object.keys(opcodes).forEach((opcode) => {
             this.opcodes[opcodes[opcode]] = implOpcode[opcode].bind(this)
@@ -131,14 +130,24 @@ class JSVM {
     }
 
     run() {
-        while (this.read(registers.STATUS)) {
+        while (true) {
             const opcode = this.readByte()
+            if (opcode === undefined || opNames[opcode] === "END") {
+                // treat as end
+                vmlog(`JSVM > [IP = ${this.read(registers.INSTRUCTION_POINTER) - 1}]: End of execution`)
+                break
+            }
+            if (!this.opcodes[opcode]) {
+                vmlog(`JSVM > [IP = ${this.read(registers.INSTRUCTION_POINTER) - 1}]: Unknown opcode ${opcode}`)
+                // treat as NOP
+                continue
+            }
             vmlog(`JSVM > [IP = ${this.read(registers.INSTRUCTION_POINTER) - 1}]: Executing ${opNames[opcode]}`)
             try {
                 this.opcodes[opcode]()
             } catch (e) {
                 vmlog(`JSVM > ${e.toString()} at IP = ${this.read(registers.INSTRUCTION_POINTER)}`)
-                this.registers[registers.STATUS] = 0
+                throw e
             }
         }
     }

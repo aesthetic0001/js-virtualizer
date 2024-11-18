@@ -80,16 +80,17 @@ const implOpcode = {
             this.registers[registers.INSTRUCTION_POINTER] = cur + offset - 1;
         }
     },
-    TRY_CATCH: function () {
+    TRY_CATCH_FINALLY: function () {
+        const cur = this.read(registers.INSTRUCTION_POINTER);
+        const errorRegister = this.readByte();
         const catchOffset = this.readDWORD(), finallyOffset = this.readDWORD();
         try {
             this.run();
         } catch (e) {
-            const cur = this.read(registers.INSTRUCTION_POINTER);
-            this.write(registers.INSTRUCTION_POINTER, cur + catchOffset - 1);
+            this.write(errorRegister, e);
+            this.write(registers.INSTRUCTION_POINTER, cur + catchOffset - 1)
         } finally {
-            const cur = this.read(registers.INSTRUCTION_POINTER);
-            this.write(registers.INSTRUCTION_POINTER, cur + finallyOffset - 1);
+            this.write(registers.INSTRUCTION_POINTER, cur + finallyOffset - 1)
         }
     },
     THROW: function () {
@@ -196,7 +197,6 @@ const implOpcode = {
     NOP: function () {
     },
     END: function () {
-        this.registers[registers.STATUS] = 0;
     },
     PRINT: function () {
         console.log(this.read(this.readByte()));

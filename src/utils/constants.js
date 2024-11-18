@@ -1,6 +1,5 @@
 const registerNames = [
     "INSTRUCTION_POINTER",
-    "STATUS",
     // for void functions/operations
     "VOID"
 ]
@@ -50,9 +49,9 @@ const opNames = [
     "JUMP_EQ",
     // [register, offset]
     "JUMP_NOT_EQ",
-    // [catch_offset, finally_offset]
-    "TRY_CATCH",
-    // [err_register]
+    // [error_store_register, catch_offset, finally_offset]
+    "TRY_CATCH_FINALLY",
+    // [err_message_register]
     "THROW",
 
     // memory
