@@ -69,7 +69,16 @@ function virtualizeFunction(code) {
                 const chunk = new VMChunk();
                 const encoding = encodings[crypto.randomInt(0, encodings.length)];
                 const dependencyRegisters = {}
+                for (const arg of node.params) {
+                    const register = randomRegister();
+                    reservedRegisters.add(register);
+                    dependencyRegisters[register] = arg.name;
+                }
                 for (const dependency of dependencies) {
+                    if (dependency in dependencyRegisters) {
+                        transpilelog(`Warning: Dependency "${dependency}" already in dependency registers! This may lead to unexpected behavior.`);
+                        continue;
+                    }
                     dependencyRegisters[randomRegister()] = dependency
                 }
                 const outputRegister = randomRegister();
