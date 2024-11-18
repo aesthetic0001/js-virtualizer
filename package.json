@@ -9,5 +9,10 @@
   "private": true,
   "devDependencies": {
     "jest": "^29.7.0"
+  },
+  "dependencies": {
+    "acorn": "^8.14.0",
+    "acorn-walk": "^8.3.4",
+    "eslint-scope": "^8.2.0"
   }
 }
