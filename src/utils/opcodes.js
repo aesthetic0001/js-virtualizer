@@ -88,9 +88,11 @@ const implOpcode = {
             this.run();
         } catch (e) {
             this.write(errorRegister, e);
-            this.write(registers.INSTRUCTION_POINTER, cur + catchOffset - 1)
+            this.registers[registers.INSTRUCTION_POINTER] = cur + catchOffset - 1;
+            this.run();
         } finally {
-            this.write(registers.INSTRUCTION_POINTER, cur + finallyOffset - 1)
+            this.registers[registers.INSTRUCTION_POINTER] = cur + finallyOffset - 1
+            this.run();
         }
     },
     THROW: function () {
