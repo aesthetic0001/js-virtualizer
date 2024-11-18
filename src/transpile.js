@@ -52,51 +52,62 @@ function virtualizeFunction(code) {
 
     const virtualizedChunks = [];
 
+    function virtualizeFunction(node) {
+        const dependencies = analyzeScope(ast, node);
+        const reservedRegisters = new Set()
+
+        function randomRegister() {
+            let register = crypto.randomInt(registerNames.length, 256);
+            while (reservedRegisters.has(register)) {
+                register = crypto.randomInt(registerNames.length, 256);
+            }
+            return register;
+        }
+
+        const chunk = new VMChunk();
+        const encoding = encodings[crypto.randomInt(0, encodings.length)];
+        const dependencyRegisters = {}
+        for (const arg of node.params) {
+            const register = randomRegister();
+            reservedRegisters.add(register);
+            dependencyRegisters[register] = arg.name;
+        }
+        for (const dependency of dependencies) {
+            if (dependency in dependencyRegisters) {
+                transpilelog(`Warning: Dependency "${dependency}" already in dependency registers! This may lead to unexpected behavior.`);
+                continue;
+            }
+            dependencyRegisters[randomRegister()] = dependency
+        }
+        const outputRegister = randomRegister();
+
+        const functionBody = node.body.body;
+
+        // virtualize function body
+
+        const bytecode = chunk.toBytes().toString(encoding);
+        const virtualizedFunction = functionWrapperTemplate
+            .replace("%FUNCTION_NAME%", node.id.name)
+            .replace("%ARGS%", node.params.map((param) => param.name).join(","))
+            .replace("%ENCODING%", encoding)
+            .replace("%DEPENDENCIES%", JSON.stringify(dependencyRegisters).replace(/"/g, ""))
+            .replace("%OUTPUT_REGISTER%", outputRegister.toString())
+            .replace("%BYTECODE%", bytecode);
+        virtualizedChunks.push(virtualizedFunction);
+        transpilelog(`Virtualized Function "${node.id.name}"`);
+        transpilelog(`Dependencies: ${JSON.stringify(dependencies)}`);
+        transpilelog(`${virtualizedFunction}`);
+    }
+
     walk.simple(ast, {
         FunctionDeclaration(node) {
             if (needToVirtualize(node)) {
-                const dependencies = analyzeScope(ast, node);
-                const reservedRegisters = new Set()
-
-                function randomRegister() {
-                    let register = crypto.randomInt(registerNames.length, 256);
-                    while (reservedRegisters.has(register)) {
-                        register = crypto.randomInt(registerNames.length, 256);
-                    }
-                    return register;
-                }
-
-                const chunk = new VMChunk();
-                const encoding = encodings[crypto.randomInt(0, encodings.length)];
-                const dependencyRegisters = {}
-                for (const arg of node.params) {
-                    const register = randomRegister();
-                    reservedRegisters.add(register);
-                    dependencyRegisters[register] = arg.name;
-                }
-                for (const dependency of dependencies) {
-                    if (dependency in dependencyRegisters) {
-                        transpilelog(`Warning: Dependency "${dependency}" already in dependency registers! This may lead to unexpected behavior.`);
-                        continue;
-                    }
-                    dependencyRegisters[randomRegister()] = dependency
-                }
-                const outputRegister = randomRegister();
-                const bytecode = chunk.toBytes().toString(encoding);
-                const virtualizedFunction = functionWrapperTemplate
-                    .replace("%FUNCTION_NAME%", node.id.name)
-                    .replace("%ARGS%", node.params.map((param) => param.name).join(","))
-                    .replace("%ENCODING%", encoding)
-                    .replace("%DEPENDENCIES%", JSON.stringify(dependencyRegisters).replace(/"/g, ""))
-                    .replace("%OUTPUT_REGISTER%", outputRegister.toString())
-                    .replace("%BYTECODE%", bytecode);
-                virtualizedChunks.push(virtualizedFunction);
-                transpilelog(`Virtualized Function "${node.id.name}"`);
-                transpilelog(`Dependencies: ${JSON.stringify(dependencies)}`);
-                transpilelog(`${virtualizedFunction}`);
+                virtualizeFunction(node);
             }
         },
     });
+
+    return virtualizedChunks;
 }
 
 const samplePath = path.join(__dirname, "../sample/sum.js");
