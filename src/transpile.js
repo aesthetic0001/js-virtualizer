@@ -3,8 +3,6 @@ const walk = require("acorn-walk");
 const eslintScope = require("eslint-scope");
 const {readFileSync} = require("node:fs");
 const path = require("node:path");
-const {VMChunk, Opcode} = require("./utils/assembler");
-const {registerNames} = require("./utils/constants");
 const functionWrapperTemplate = readFileSync(path.join(__dirname, "./templates/functionWrapper.template"), "utf-8");
 const crypto = require("crypto");
 const {FunctionBytecodeGenerator} = require("./utils/BytecodeGenerator");
@@ -75,6 +73,8 @@ function virtualizeFunction(code) {
             regToDep[register] = arg.name;
             generator.declareVariable(arg.name, register)
         }
+
+        console.log(generator)
 
         generator.generate();
 

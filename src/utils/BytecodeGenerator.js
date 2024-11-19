@@ -33,6 +33,40 @@ class BytecodeValue {
     }
 }
 
+function getBytecodeType(Literal) {
+    switch (typeof Literal) {
+        case 'number': {
+            return Number.isInteger(Literal) ? 'DWORD' : 'FLOAT';
+        }
+        case 'string': {
+            return 'STRING';
+        }
+    }
+}
+
+function operatorToOpcode(operator) {
+    switch (operator) {
+        case '+': {
+            return 'ADD';
+        }
+        case '-': {
+            return 'SUBTRACT';
+        }
+        case '*': {
+            return 'MULTIPLY';
+        }
+        case '/': {
+            return 'DIVIDE';
+        }
+        case '%': {
+            return 'MODULO';
+        }
+        case '**': {
+            return 'POWER';
+        }
+    }
+}
+
 class FunctionBytecodeGenerator {
     constructor(ast, chunk) {
         this.ast = ast;
@@ -76,6 +110,49 @@ class FunctionBytecodeGenerator {
         return register;
     }
 
+    evaluateBinaryExpression(node) {
+        const {left, right, operator} = node;
+        const opcode = operatorToOpcode(operator);
+        switch (left.type) {
+            case 'BinaryExpression': {
+                this.evaluateBinaryExpression(left);
+                break;
+            }
+            case 'Literal': {
+                const type = getBytecodeType(left.value);
+                const value = new BytecodeValue(type, left.value, this.accumulatorRegister);
+                this.chunk.append(value.getLoadOpcode());
+                return;
+            }
+            case 'Identifier': {
+                const register = this.activeVariables[left.name][this.activeVariables[left.name].length - 1];
+                this.chunk.append(new Opcode(`SET`, this.accumulatorRegister, register));
+                return;
+            }
+        }
+        switch (right.type) {
+            case 'BinaryExpression': {
+                this.evaluateBinaryExpression(right);
+                break;
+            }
+            case 'Literal': {
+                const type = getBytecodeType(right.value);
+                const value = new BytecodeValue(type, right.value, this.loadRegister);
+                this.chunk.append(value.getLoadOpcode());
+                this.chunk.append(new Opcode(opcode, this.accumulatorRegister, this.accumulatorRegister, this.loadRegister));
+                return;
+            }
+            case 'Identifier': {
+                const register = this.activeVariables[right.name][this.activeVariables[right.name].length - 1];
+                this.chunk.append(new Opcode(`SET`, this.loadRegister, register));
+                this.chunk.append(new Opcode(opcode, this.accumulatorRegister, this.accumulatorRegister, this.loadRegister));
+                return
+            }
+        }
+        // if both left and right are binary expressions
+        this.chunk.append(new Opcode(opcode, this.accumulatorRegister, this.accumulatorRegister, this.loadRegister));
+    }
+
     // generate bytecode for all converted values
     generate(block) {
         block = block || this.ast
@@ -88,9 +165,48 @@ class FunctionBytecodeGenerator {
                     break;
                 }
                 case 'VariableDeclaration': {
-                    const register = this.randomRegister();
-                    console.log('VariableDeclaration', node.declarations[0].id.name, register)
+                    for (const declaration of node.declarations) {
+                        this.declareVariable(declaration.id.name, this.randomRegister());
+                        if (declaration.init) {
+                            const type = getBytecodeType(declaration.init.value);
+                            const value = new BytecodeValue(type, declaration.init.value, this.activeVariables[declaration.id.name][0]);
+                            this.chunk.append(value.getLoadOpcode());
+                        }
+                    }
                     break;
+                }
+                case 'VariableDeclarator': {
+                    this.declareVariable(node.id.name, this.randomRegister());
+                    if (node.init) {
+                        const type = getBytecodeType(node.init.value);
+                        const value = new BytecodeValue(type, node.init.value, this.activeVariables[node.id.name][0]);
+                        this.chunk.append(value.getLoadOpcode());
+                    }
+                    break;
+                }
+                case 'BinaryExpression': {
+                    this.evaluateBinaryExpression(node);
+                    break;
+                }
+                case 'ReturnStatement': {
+                    switch (node.argument.type) {
+                        case 'Literal': {
+                            const type = getBytecodeType(node.argument.value);
+                            const value = new BytecodeValue(type, node.argument.value, this.outputRegister);
+                            this.chunk.append(value.getLoadOpcode());
+                            break;
+                        }
+                        case 'Identifier': {
+                            const register = this.activeVariables[node.argument.name][this.activeVariables[node.argument.name].length - 1];
+                            this.chunk.append(new Opcode(`SET`, this.outputRegister, register));
+                            break;
+                        }
+                        case 'BinaryExpression': {
+                            this.evaluateBinaryExpression(node.argument);
+                            this.chunk.append(new Opcode(`SET`, this.outputRegister, this.accumulatorRegister));
+                            break;
+                        }
+                    }
                 }
             }
         }
@@ -102,6 +218,7 @@ class FunctionBytecodeGenerator {
     }
 
     getBytecode() {
+        console.log(this.chunk.toString());
         return this.chunk.toBytes();
     }
 }

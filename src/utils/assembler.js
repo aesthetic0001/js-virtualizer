@@ -58,6 +58,9 @@ class VMChunk {
                 return line;
             }
         );
+        if (!this.hasCustomTerminator) {
+            lines.push(`[IP: ${IP}] - END`);
+        }
         const info = [
             `Chunk length: ${this.code.length}`,
             `Already has terminator: ${this.hasCustomTerminator}`,
