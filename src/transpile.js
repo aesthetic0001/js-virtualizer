@@ -57,27 +57,25 @@ function virtualizeFunction(code) {
         const dependencies = analyzeScope(ast, node);
         const functionBody = node.body.body;
         const encoding = encodings[crypto.randomInt(0, encodings.length)];
-        const regToDep = {}, depToReg = {}
+        const regToDep = {}
 
         const generator = new FunctionBytecodeGenerator(functionBody);
 
-        for (const arg of node.params) {
-            const register = generator.randomRegister();
-            regToDep[register] = arg.name;
-            depToReg[arg.name] = register;
-        }
-
         for (const dependency of dependencies) {
-            if (dependency in regToDep) {
-                transpilelog(`Warning: Dependency "${dependency}" already in dependency registers! This may lead to unexpected behavior.`);
-                continue;
-            }
             const register = generator.randomRegister()
             regToDep[register] = dependency
-            depToReg[dependency] = register;
+            generator.declareVariable(dependency, register)
         }
 
-        generator.registeredValues = {...generator.registeredValues, ...depToReg}
+        for (const arg of node.params) {
+            if (regToDep[arg.name]) {
+                transpilelog(`Warning: Param "${arg.name}" shadows dependency "${regToDep[arg]}"!`);
+            }
+            const register = generator.randomRegister();
+            regToDep[register] = arg.name;
+            generator.declareVariable(arg.name, register)
+        }
+
         generator.generate();
 
         const bytecode = generator.getBytecode().toString(encoding);
