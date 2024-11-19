@@ -136,6 +136,7 @@ class FunctionBytecodeGenerator {
         for (const [register, available] of Object.entries(this.available)) {
             if (available) {
                 this.available[register] = false
+                console.log(register)
                 return this[register]
             }
         }
@@ -215,11 +216,11 @@ class FunctionBytecodeGenerator {
         const mergedTL = this.TLMap[mergeTo]
         log(`Merge result stored in ${mergedTL}`)
         if (leftTL && leftTL !== mergedTL) {
-            this.available[finalL] = true
+            this.available[leftTL] = true
             log(`Freed ${leftTL}`)
         }
         if (rightTL && rightTL !== mergedTL) {
-            this.available[finalR] = true
+            this.available[rightTL] = true
             log(`Freed ${rightTL}`)
         }
         this.previousLoad = mergeTo
