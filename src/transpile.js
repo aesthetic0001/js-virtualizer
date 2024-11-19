@@ -7,6 +7,7 @@ const {VMChunk, Opcode} = require("./utils/assembler");
 const {registerNames} = require("./utils/constants");
 const functionWrapperTemplate = readFileSync(path.join(__dirname, "./templates/functionWrapper.template"), "utf-8");
 const crypto = require("crypto");
+const {FunctionBytecodeGenerator} = require("./utils/BytecodeGenerator");
 
 const debug = true
 const encodings = ['base64', 'hex']
@@ -54,44 +55,38 @@ function virtualizeFunction(code) {
 
     function virtualizeFunction(node) {
         const dependencies = analyzeScope(ast, node);
-        const reservedRegisters = new Set()
-
-        function randomRegister() {
-            let register = crypto.randomInt(registerNames.length, 256);
-            while (reservedRegisters.has(register)) {
-                register = crypto.randomInt(registerNames.length, 256);
-            }
-            return register;
-        }
-
-        const chunk = new VMChunk();
+        const functionBody = node.body.body;
         const encoding = encodings[crypto.randomInt(0, encodings.length)];
-        const dependencyRegisters = {}
+        const regToDep = {}, depToReg = {}
+
+        const generator = new FunctionBytecodeGenerator(functionBody);
+
         for (const arg of node.params) {
-            const register = randomRegister();
-            reservedRegisters.add(register);
-            dependencyRegisters[register] = arg.name;
+            const register = generator.randomRegister();
+            regToDep[register] = arg.name;
+            depToReg[arg.name] = register;
         }
+
         for (const dependency of dependencies) {
-            if (dependency in dependencyRegisters) {
+            if (dependency in regToDep) {
                 transpilelog(`Warning: Dependency "${dependency}" already in dependency registers! This may lead to unexpected behavior.`);
                 continue;
             }
-            dependencyRegisters[randomRegister()] = dependency
+            const register = generator.randomRegister()
+            regToDep[register] = dependency
+            depToReg[dependency] = register;
         }
-        const outputRegister = randomRegister();
 
-        const functionBody = node.body.body;
+        generator.registeredValues = {...generator.registeredValues, ...depToReg}
+        generator.generate();
 
-        // virtualize function body
-
-        const bytecode = chunk.toBytes().toString(encoding);
+        const bytecode = generator.getBytecode().toString(encoding);
         const virtualizedFunction = functionWrapperTemplate
             .replace("%FUNCTION_NAME%", node.id.name)
             .replace("%ARGS%", node.params.map((param) => param.name).join(","))
             .replace("%ENCODING%", encoding)
-            .replace("%DEPENDENCIES%", JSON.stringify(dependencyRegisters).replace(/"/g, ""))
-            .replace("%OUTPUT_REGISTER%", outputRegister.toString())
+            .replace("%DEPENDENCIES%", JSON.stringify(regToDep).replace(/"/g, ""))
+            .replace("%OUTPUT_REGISTER%", generator.outputRegister.toString())
             .replace("%BYTECODE%", bytecode);
         virtualizedChunks.push(virtualizedFunction);
         transpilelog(`Virtualized Function "${node.id.name}"`);
