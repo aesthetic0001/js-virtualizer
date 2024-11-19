@@ -6,8 +6,8 @@ const path = require("node:path");
 const functionWrapperTemplate = readFileSync(path.join(__dirname, "./templates/functionWrapper.template"), "utf-8");
 const crypto = require("crypto");
 const {FunctionBytecodeGenerator} = require("./utils/BytecodeGenerator");
-
-const debug = true
+const escodegen = require("escodegen");
+const debug = process.env.DEBUG === "true";
 const encodings = ['base64', 'hex']
 
 function transpilelog(message) {
@@ -16,7 +16,7 @@ function transpilelog(message) {
     }
 }
 
-function virtualizeFunction(code) {
+function virtualizeFunctions(code) {
     const comments = [];
     const ast = acorn.parse(code, {
         ecmaVersion: "latest",
@@ -48,8 +48,6 @@ function virtualizeFunction(code) {
         });
         return Array.from(dependencies)
     }
-
-    const virtualizedChunks = [];
 
     function virtualizeFunction(node) {
         const dependencies = analyzeScope(ast, node);
@@ -84,22 +82,28 @@ function virtualizeFunction(code) {
             .replace("%DEPENDENCIES%", JSON.stringify(regToDep).replace(/"/g, ""))
             .replace("%OUTPUT_REGISTER%", generator.outputRegister.toString())
             .replace("%BYTECODE%", bytecode);
-        virtualizedChunks.push(virtualizedFunction);
         transpilelog(`Virtualized Function "${node.id.name}"`);
         transpilelog(`Dependencies: ${JSON.stringify(dependencies)}`);
+        const replacedBody = acorn.parse(virtualizedFunction, {
+            ecmaVersion: "latest",
+            sourceType: "module",
+            locations: true,
+            ranges: true,
+        });
+        return replacedBody.body[0].body.body
     }
 
     walk.simple(ast, {
         FunctionDeclaration(node) {
             if (needToVirtualize(node)) {
-                virtualizeFunction(node);
+                node.body.body = virtualizeFunction(node);
             }
         },
     });
 
-    return virtualizedChunks;
+    return escodegen.generate(ast);
 }
 
-const samplePath = path.join(__dirname, "../sample/sum.js");
-const sampleCode = readFileSync(samplePath, "utf-8");
-virtualizeFunction(sampleCode);
+module.exports = {
+    virtualizeFunctions
+}

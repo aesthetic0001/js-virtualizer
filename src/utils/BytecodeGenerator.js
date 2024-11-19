@@ -1,7 +1,7 @@
 const {VMChunk, Opcode, encodeDWORD, encodeFloat, encodeString} = require("./assembler");
 const crypto = require("crypto");
 const {registerNames} = require("./constants");
-const debug = true
+const debug = process.env.DEBUG === "true";
 
 function generatorlog(message) {
     if (debug) {
