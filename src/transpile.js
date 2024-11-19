@@ -97,8 +97,6 @@ function virtualizeFunction(code) {
         },
     });
 
-    writeFileSync('output.js', virtualizedChunks.join('\n'));
-
     return virtualizedChunks;
 }
 

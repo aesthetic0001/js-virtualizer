@@ -1,3 +1,4 @@
+const JSVM = require("../src/vm");
 const multiplier = 2;
 
 // @virtualize
