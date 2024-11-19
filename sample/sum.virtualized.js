@@ -2,13 +2,13 @@ const JSVM = require('../src/vm');
 const multiplier = 2;
 function sum(a, b) {
     const VM = new JSVM();
-    VM.loadFromString('D8M2D1ZDGsPDVg9WWBzDw1YPIMMm', 'base64');
+    VM.loadFromString('1a5b30690170000000021a7077701c5b5b700f805b26', 'hex');
     VM.loadDependencies({
-        54: a,
-        67: b,
-        88: multiplier
+        48: a,
+        105: b,
+        119: multiplier
     });
     VM.run();
-    return VM.registers[32];
+    return VM.registers[128];
 }
 console.log(sum(1, 2));

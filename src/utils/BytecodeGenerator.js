@@ -4,10 +4,21 @@ const {registerNames} = require("./constants");
 const {log, LogData} = require("./log");
 
 class BytecodeValue {
-    constructor(type, value, register) {
-        this.type = type;
+    constructor(value, register, type) {
+        this.type = type || this.getBytecodeType(value);
         this.value = value;
         this.register = register;
+    }
+
+    getBytecodeType(Literal) {
+        switch (typeof Literal) {
+            case 'number': {
+                return Number.isInteger(Literal) ? 'DWORD' : 'FLOAT';
+            }
+            case 'string': {
+                return 'STRING';
+            }
+        }
     }
 
     getLoadOpcode() {
@@ -31,17 +42,6 @@ class BytecodeValue {
             }
         }
         return new Opcode(`LOAD_${this.type}`, this.register, encoded);
-    }
-}
-
-function getBytecodeType(Literal) {
-    switch (typeof Literal) {
-        case 'number': {
-            return Number.isInteger(Literal) ? 'DWORD' : 'FLOAT';
-        }
-        case 'string': {
-            return 'STRING';
-        }
     }
 }
 
@@ -75,13 +75,26 @@ class FunctionBytecodeGenerator {
         this.reservedRegisters = new Set()
         this.outputRegister = this.randomRegister();
 
-        // for literal arithmetics
-        this.accumulatorRegister = this.randomRegister();
-        this.loadRegister = this.randomRegister();
+        // for arithmetics
+        this.TL1 = this.randomRegister();
+        this.TL2 = this.randomRegister();
+        this.TL3 = this.randomRegister();
+        this.previousLoad = null
+        this.available = {
+            TL1: true,
+            TL2: true,
+            TL3: true
+        }
+        this.TLMap = {
+            [this.TL1]: 'TL1',
+            [this.TL2]: 'TL2',
+            [this.TL3]: 'TL3'
+        }
+        this.mergeResult = null
 
         log(new LogData(`Output register: ${this.outputRegister}`, 'accent', false))
-        log(new LogData(`Accumulator register: ${this.accumulatorRegister}`, 'accent', false))
-        log(new LogData(`Load register: ${this.loadRegister}`, 'accent', false))
+        log(new LogData(`Temp Loader 1: ${this.TL1} | Temp Loader 2: ${this.TL2} | Temp Loader 3: ${this.TL3}`, 'accent', false))
+
         // for variable contexts
 
         // variables declared by the scope, array of array of variable names
@@ -101,6 +114,11 @@ class FunctionBytecodeGenerator {
         this.activeScopes[this.activeScopes.length - 1].push(variableName)
     }
 
+    getVariable(variableName) {
+        const scopeArray = this.activeVariables[variableName]
+        return scopeArray[scopeArray.length - 1]
+    }
+
     removeRegister(register) {
         this.reservedRegisters.delete(register);
     }
@@ -114,46 +132,98 @@ class FunctionBytecodeGenerator {
         return register;
     }
 
-    evaluateBinaryExpression(node) {
+    getAvailableTempLoad() {
+        for (const [register, available] of Object.entries(this.available)) {
+            if (available) {
+                this.available[register] = false
+                return this[register]
+            }
+        }
+        log(new LogData('No available temp load registers!', 'error', false))
+    }
+
+    evaluateBinaryExpression(node, root = true) {
         const {left, right, operator} = node;
         const opcode = operatorToOpcode(operator);
+
+        if (root) {
+            // reset the available registers
+            this.available = {
+                TL1: true,
+                TL2: true,
+                TL3: true
+            }
+        }
+
+        let finalL, finalR
+        let leftIsImmutable = false, rightIsImmutable = false
+
+        log(`Evaluating binary expression: ${left.type} ${operator} ${right.type}`)
+
         switch (left.type) {
             case 'BinaryExpression': {
-                this.evaluateBinaryExpression(left);
+                this.evaluateBinaryExpression(left, false);
+                finalL = this.mergeResult
+                log(`Merged result left is at ${this.TLMap[finalL]}`)
                 break;
             }
             case 'Literal': {
-                const type = getBytecodeType(left.value);
-                const value = new BytecodeValue(type, left.value, this.accumulatorRegister);
-                this.chunk.append(value.getLoadOpcode());
+                const reg = this.getAvailableTempLoad()
+                finalL = reg
+                const valueLeft = new BytecodeValue(left.value, reg);
+                this.chunk.append(valueLeft.getLoadOpcode());
+                log(`Loaded literal left: ${left.value} into ${this.TLMap[reg]}`)
                 break;
             }
             case 'Identifier': {
-                const register = this.activeVariables[left.name][this.activeVariables[left.name].length - 1];
-                this.chunk.append(new Opcode('SET_REF', this.accumulatorRegister, register));
+                finalL = this.getVariable(left.name);
+                leftIsImmutable = true
+                log(`Loaded variable left: ${left.name} at register ${finalL}`)
                 break;
             }
         }
+
         switch (right.type) {
             case 'BinaryExpression': {
-                this.evaluateBinaryExpression(right);
+                this.evaluateBinaryExpression(right, false);
+                finalR = this.mergeResult
+                log(`Merged result right is at ${this.TLMap[finalR]}`)
                 break;
             }
             case 'Literal': {
-                const type = getBytecodeType(right.value);
-                const value = new BytecodeValue(type, right.value, this.loadRegister);
-                this.chunk.append(value.getLoadOpcode());
+                const reg = this.getAvailableTempLoad()
+                finalR = reg
+                const valueRight = new BytecodeValue(right.value, reg);
+                this.chunk.append(valueRight.getLoadOpcode());
+                log(`Loaded literal right: ${right.value} into ${this.TLMap[reg]}`)
                 break;
             }
             case 'Identifier': {
-                const register = this.activeVariables[right.name][this.activeVariables[right.name].length - 1];
-                this.chunk.append(new Opcode('SET_REF', this.loadRegister, register));
+                finalR = this.getVariable(right.name);
+                rightIsImmutable = true
+                log(`Loaded variable right: ${right.name} at register ${finalR}`)
                 break
             }
         }
-        // if both left and right are binary expressions
-        log(`Appending opcode ${opcode} with accumulator register ${this.accumulatorRegister}, load register ${this.loadRegister}`)
-        this.chunk.append(new Opcode(opcode, this.accumulatorRegister, this.accumulatorRegister, this.loadRegister));
+
+        // always merge to the left
+        const mergeTo = (leftIsImmutable) ? (rightIsImmutable ? this.getAvailableTempLoad() : finalR) : finalL
+        this.chunk.append(new Opcode(opcode, mergeTo, finalL, finalR));
+        this.mergeResult = mergeTo
+        const leftTL = this.TLMap[finalL]
+        const rightTL = this.TLMap[finalR]
+        const mergedTL = this.TLMap[mergeTo]
+        log(`Merge result stored in ${mergedTL}`)
+        if (leftTL && leftTL !== mergedTL) {
+            this.available[finalL] = true
+            log(`Freed ${leftTL}`)
+        }
+        if (rightTL && rightTL !== mergedTL) {
+            this.available[finalR] = true
+            log(`Freed ${rightTL}`)
+        }
+        this.previousLoad = mergeTo
+        log(`Evaluated binary expression: ${left.type} ${operator} ${right.type} to ${this.TLMap[mergeTo]}`)
     }
 
     // generate bytecode for all converted values
@@ -171,8 +241,7 @@ class FunctionBytecodeGenerator {
                     for (const declaration of node.declarations) {
                         this.declareVariable(declaration.id.name, this.randomRegister());
                         if (declaration.init) {
-                            const type = getBytecodeType(declaration.init.value);
-                            const value = new BytecodeValue(type, declaration.init.value, this.activeVariables[declaration.id.name][0]);
+                            const value = new BytecodeValue(declaration.init.value, this.getVariable(node.id.name));
                             this.chunk.append(value.getLoadOpcode());
                         }
                     }
@@ -181,8 +250,7 @@ class FunctionBytecodeGenerator {
                 case 'VariableDeclarator': {
                     this.declareVariable(node.id.name, this.randomRegister());
                     if (node.init) {
-                        const type = getBytecodeType(node.init.value);
-                        const value = new BytecodeValue(type, node.init.value, this.activeVariables[node.id.name][0]);
+                        const value = new BytecodeValue(node.init.value, this.getVariable(node.id.name));
                         this.chunk.append(value.getLoadOpcode());
                     }
                     break;
@@ -194,19 +262,18 @@ class FunctionBytecodeGenerator {
                 case 'ReturnStatement': {
                     switch (node.argument.type) {
                         case 'Literal': {
-                            const type = getBytecodeType(node.argument.value);
-                            const value = new BytecodeValue(type, node.argument.value, this.outputRegister);
+                            const value = new BytecodeValue(node.argument.value, this.outputRegister);
                             this.chunk.append(value.getLoadOpcode());
                             break;
                         }
                         case 'Identifier': {
-                            const register = this.activeVariables[node.argument.name][this.activeVariables[node.argument.name].length - 1];
+                            const register = this.getVariable(node.argument.name);
                             this.chunk.append(new Opcode('SET_REF', this.outputRegister, register));
                             break;
                         }
                         case 'BinaryExpression': {
                             this.evaluateBinaryExpression(node.argument);
-                            this.chunk.append(new Opcode('SET_REF', this.outputRegister, this.accumulatorRegister));
+                            this.chunk.append(new Opcode('SET_REF', this.outputRegister, this.previousLoad));
                             break;
                         }
                     }
