@@ -136,7 +136,6 @@ class FunctionBytecodeGenerator {
         for (const [register, available] of Object.entries(this.available)) {
             if (available) {
                 this.available[register] = false
-                console.log(register)
                 return this[register]
             }
         }
