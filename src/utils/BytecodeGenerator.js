@@ -1,6 +1,13 @@
 const {VMChunk, Opcode, encodeDWORD, encodeFloat, encodeString} = require("./assembler");
 const crypto = require("crypto");
 const {registerNames} = require("./constants");
+const debug = true
+
+function generatorlog(message) {
+    if (debug) {
+        console.log(message)
+    }
+}
 
 class BytecodeValue {
     constructor(type, value, register) {
@@ -78,6 +85,11 @@ class FunctionBytecodeGenerator {
         this.accumulatorRegister = this.randomRegister();
         this.loadRegister = this.randomRegister();
 
+        generatorlog(`-- Set up function bytecode generator --`)
+        generatorlog(`Output register: ${this.outputRegister}`)
+        generatorlog(`Accumulator register: ${this.accumulatorRegister}`)
+        generatorlog(`Load register: ${this.loadRegister}`)
+        generatorlog(`--                                    --\n`)
         // for variable contexts
 
         // variables declared by the scope, array of array of variable names
@@ -113,8 +125,10 @@ class FunctionBytecodeGenerator {
     evaluateBinaryExpression(node) {
         const {left, right, operator} = node;
         const opcode = operatorToOpcode(operator);
+        generatorlog(`Evaluating binary expression of operator ${operator}`)
         switch (left.type) {
             case 'BinaryExpression': {
+                generatorlog(`Left is a binary expression`)
                 this.evaluateBinaryExpression(left);
                 break;
             }
@@ -122,16 +136,19 @@ class FunctionBytecodeGenerator {
                 const type = getBytecodeType(left.value);
                 const value = new BytecodeValue(type, left.value, this.accumulatorRegister);
                 this.chunk.append(value.getLoadOpcode());
-                return;
+                generatorlog(`Left is a literal of type ${type}, value ${left.value}`)
+                break;
             }
             case 'Identifier': {
                 const register = this.activeVariables[left.name][this.activeVariables[left.name].length - 1];
                 this.chunk.append(new Opcode(`SET`, this.accumulatorRegister, register));
-                return;
+                generatorlog(`Left is a variable ${left.name}, set accumulator register to ${register}`)
+                break;
             }
         }
         switch (right.type) {
             case 'BinaryExpression': {
+                generatorlog(`Right is a binary expression`)
                 this.evaluateBinaryExpression(right);
                 break;
             }
@@ -139,14 +156,14 @@ class FunctionBytecodeGenerator {
                 const type = getBytecodeType(right.value);
                 const value = new BytecodeValue(type, right.value, this.loadRegister);
                 this.chunk.append(value.getLoadOpcode());
-                this.chunk.append(new Opcode(opcode, this.accumulatorRegister, this.accumulatorRegister, this.loadRegister));
-                return;
+                generatorlog(`Right is a literal of type ${type}, value ${right.value}`)
+                break;
             }
             case 'Identifier': {
                 const register = this.activeVariables[right.name][this.activeVariables[right.name].length - 1];
                 this.chunk.append(new Opcode(`SET`, this.loadRegister, register));
-                this.chunk.append(new Opcode(opcode, this.accumulatorRegister, this.accumulatorRegister, this.loadRegister));
-                return
+                generatorlog(`Right is a variable ${right.name}, set load register to ${register}`)
+                break
             }
         }
         // if both left and right are binary expressions

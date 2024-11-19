@@ -1,6 +1,6 @@
 const {registers, opcodes, opNames, registerNames, reservedNames} = require("./utils/constants");
 const implOpcode = require("./utils/opcodes");
-const debug = process.env.DEBUG === 'true'
+const debug = true
 
 function vmlog(message) {
     if (debug) {
@@ -124,7 +124,7 @@ class JSVM {
 
     loadDependencies(dependencies) {
         Object.keys(dependencies).forEach((key) => {
-            vmlog(`JSVM > Loading dependency ${key}: ${dependencies[key]}`)
+            vmlog(`JSVM > Loading dependency to register ${key}: ${dependencies[key]}`)
             this.write(parseInt(key), dependencies[key])
         })
     }

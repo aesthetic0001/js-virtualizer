@@ -1,7 +1,7 @@
 const acorn = require("acorn");
 const walk = require("acorn-walk");
 const eslintScope = require("eslint-scope");
-const {readFileSync} = require("node:fs");
+const {readFileSync, writeFileSync} = require("node:fs");
 const path = require("node:path");
 const functionWrapperTemplate = readFileSync(path.join(__dirname, "./templates/functionWrapper.template"), "utf-8");
 const crypto = require("crypto");
@@ -74,8 +74,6 @@ function virtualizeFunction(code) {
             generator.declareVariable(arg.name, register)
         }
 
-        console.log(generator)
-
         generator.generate();
 
         const bytecode = generator.getBytecode().toString(encoding);
@@ -89,7 +87,6 @@ function virtualizeFunction(code) {
         virtualizedChunks.push(virtualizedFunction);
         transpilelog(`Virtualized Function "${node.id.name}"`);
         transpilelog(`Dependencies: ${JSON.stringify(dependencies)}`);
-        transpilelog(`${virtualizedFunction}`);
     }
 
     walk.simple(ast, {
@@ -99,6 +96,8 @@ function virtualizeFunction(code) {
             }
         },
     });
+
+    writeFileSync('output.js', virtualizedChunks.join('\n'));
 
     return virtualizedChunks;
 }
