@@ -1,13 +1,7 @@
 const {VMChunk, Opcode, encodeDWORD, encodeFloat, encodeString} = require("./assembler");
 const crypto = require("crypto");
 const {registerNames} = require("./constants");
-const debug = process.env.DEBUG === "true";
-
-function generatorlog(message) {
-    if (debug) {
-        console.log(message)
-    }
-}
+const {log, LogData} = require("./log");
 
 class BytecodeValue {
     constructor(type, value, register) {
@@ -85,11 +79,9 @@ class FunctionBytecodeGenerator {
         this.accumulatorRegister = this.randomRegister();
         this.loadRegister = this.randomRegister();
 
-        generatorlog(`-- Set up function bytecode generator --`)
-        generatorlog(`Output register: ${this.outputRegister}`)
-        generatorlog(`Accumulator register: ${this.accumulatorRegister}`)
-        generatorlog(`Load register: ${this.loadRegister}`)
-        generatorlog(`--                                    --\n`)
+        log(new LogData(`Output register: ${this.outputRegister}`, 'accent', false))
+        log(new LogData(`Accumulator register: ${this.accumulatorRegister}`, 'accent', false))
+        log(new LogData(`Load register: ${this.loadRegister}`, 'accent', false))
         // for variable contexts
 
         // variables declared by the scope, array of array of variable names
@@ -127,7 +119,6 @@ class FunctionBytecodeGenerator {
         const opcode = operatorToOpcode(operator);
         switch (left.type) {
             case 'BinaryExpression': {
-                generatorlog(`Left is a binary expression`)
                 this.evaluateBinaryExpression(left);
                 break;
             }
@@ -135,19 +126,16 @@ class FunctionBytecodeGenerator {
                 const type = getBytecodeType(left.value);
                 const value = new BytecodeValue(type, left.value, this.accumulatorRegister);
                 this.chunk.append(value.getLoadOpcode());
-                generatorlog(`Left is a literal of type ${type}, to value at ${left.value}`)
                 break;
             }
             case 'Identifier': {
                 const register = this.activeVariables[left.name][this.activeVariables[left.name].length - 1];
                 this.chunk.append(new Opcode('SET_REF', this.accumulatorRegister, register));
-                generatorlog(`Left is a variable ${left.name}, set accumulator register to value at ${register}`)
                 break;
             }
         }
         switch (right.type) {
             case 'BinaryExpression': {
-                generatorlog(`Right is a binary expression`)
                 this.evaluateBinaryExpression(right);
                 break;
             }
@@ -155,18 +143,16 @@ class FunctionBytecodeGenerator {
                 const type = getBytecodeType(right.value);
                 const value = new BytecodeValue(type, right.value, this.loadRegister);
                 this.chunk.append(value.getLoadOpcode());
-                generatorlog(`Right is a literal of type ${type}, to value at ${right.value}`)
                 break;
             }
             case 'Identifier': {
                 const register = this.activeVariables[right.name][this.activeVariables[right.name].length - 1];
                 this.chunk.append(new Opcode('SET_REF', this.loadRegister, register));
-                generatorlog(`Right is a variable ${right.name}, set load register to ${register}`)
                 break
             }
         }
         // if both left and right are binary expressions
-        generatorlog(`Appending opcode ${opcode} with accumulator register ${this.accumulatorRegister}, load register ${this.loadRegister}`)
+        log(`Appending opcode ${opcode} with accumulator register ${this.accumulatorRegister}, load register ${this.loadRegister}`)
         this.chunk.append(new Opcode(opcode, this.accumulatorRegister, this.accumulatorRegister, this.loadRegister));
     }
 
@@ -235,8 +221,7 @@ class FunctionBytecodeGenerator {
     }
 
     getBytecode() {
-        generatorlog(`-- Resulting Bytecode --`)
-        generatorlog(this.chunk.toString())
+        log(`\nResulting Bytecode:\n\n${this.chunk.toString()}`)
         return this.chunk.toBytes();
     }
 }

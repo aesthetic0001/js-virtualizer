@@ -62,9 +62,7 @@ class VMChunk {
             lines.push(`[IP: ${IP}] - END`);
         }
         const info = [
-            `Chunk length: ${this.code.length}`,
-            `Already has terminator: ${this.hasCustomTerminator}`,
-            `Total bytes: ${this.toBytes().length}`
+            `Total Operations: ${this.code.length + (!this.hasCustomTerminator ? 1 : 0)} | Total Bytes: ${this.toBytes().length}`
         ]
         return [...info, ...lines].join('\n');
     }

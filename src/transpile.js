@@ -7,14 +7,8 @@ const functionWrapperTemplate = readFileSync(path.join(__dirname, "./templates/f
 const crypto = require("crypto");
 const {FunctionBytecodeGenerator} = require("./utils/BytecodeGenerator");
 const escodegen = require("escodegen");
-const debug = process.env.DEBUG === "true";
+const {log, LogData} = require("./utils/log");
 const encodings = ['base64', 'hex']
-
-function transpilelog(message) {
-    if (debug) {
-        console.log(message)
-    }
-}
 
 function virtualizeFunctions(code) {
     const comments = [];
@@ -50,6 +44,7 @@ function virtualizeFunctions(code) {
     }
 
     function virtualizeFunction(node) {
+        log(new LogData(`Virtualizing Function "${node.id.name}"`, 'info', false));
         const dependencies = analyzeScope(ast, node);
         const functionBody = node.body.body;
         const encoding = encodings[crypto.randomInt(0, encodings.length)];
@@ -65,7 +60,7 @@ function virtualizeFunctions(code) {
 
         for (const arg of node.params) {
             if (regToDep[arg.name]) {
-                transpilelog(`Warning: Param "${arg.name}" shadows dependency "${regToDep[arg]}"!`);
+                log(new LogData(`Warning: Parameter "${arg.name}" potentially shadows required dependency "${regToDep[arg]}"!`, 'warn', false));
             }
             const register = generator.randomRegister();
             regToDep[register] = arg.name;
@@ -82,8 +77,8 @@ function virtualizeFunctions(code) {
             .replace("%DEPENDENCIES%", JSON.stringify(regToDep).replace(/"/g, ""))
             .replace("%OUTPUT_REGISTER%", generator.outputRegister.toString())
             .replace("%BYTECODE%", bytecode);
-        transpilelog(`Virtualized Function "${node.id.name}"`);
-        transpilelog(`Dependencies: ${JSON.stringify(dependencies)}`);
+        log(new LogData(`Successfully Virtualized Function "${node.id.name}"`, 'success', false));
+        log(`Dependencies: ${JSON.stringify(dependencies)}`);
         const replacedBody = acorn.parse(virtualizedFunction, {
             ecmaVersion: "latest",
             sourceType: "module",

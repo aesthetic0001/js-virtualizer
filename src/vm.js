@@ -1,15 +1,8 @@
 const {registers, opcodes, opNames, registerNames, reservedNames} = require("./utils/constants");
 const implOpcode = require("./utils/opcodes");
-const debug = true
-
-function vmlog(message) {
-    if (debug) {
-        console.log(message)
-    }
-}
+const {log} = require("./utils/log");
 
 // compiler is expected to load all dependencies into registers prior to future execution
-
 // a JSVM instance. a new one should be created for every virtualized function so that they are able to run concurrently without interfering with each other
 class JSVM {
     constructor() {
@@ -38,7 +31,7 @@ class JSVM {
     readByte() {
         const byte = this.code[this.read(registers.INSTRUCTION_POINTER)]
         this.registers[registers.INSTRUCTION_POINTER] += 1;
-        // vmlog(`JSVM > Read byte (IP = ${registers.INSTRUCTION_POINTER - 1}): ${byte.toString(16)}`)
+        // log(`Read byte (IP = ${registers.INSTRUCTION_POINTER - 1}): ${byte.toString(16)}`)
         return byte
     }
 
@@ -58,14 +51,14 @@ class JSVM {
             // these should be registers to loaded values
             array.push(this.read(this.readByte()))
         }
-        vmlog(`JSVM > Read array of length ${length}: ${array}`)
+        log(`Read array of length ${length}: ${array}`)
         return array
     }
 
     // js integers are 32-bit signed
     readDWORD() {
         const dword = this.readByte() << 24 | this.readByte() << 16 | this.readByte() << 8 | this.readByte()
-        vmlog(`JSVM > Read DWORD: ${dword}`)
+        log(`Read DWORD: ${dword}`)
         return dword
     }
 
@@ -95,7 +88,7 @@ class JSVM {
         for (let i = 0, val = 1; i < significandBin.length; ++i, val /= 2) {
             significand += val * parseInt(significandBin.charAt(i));
         }
-        vmlog(`JSVM > Read float: ${sign * significand * Math.pow(2, exponent)}`)
+        log(`Read float: ${sign * significand * Math.pow(2, exponent)}`)
         return sign * significand * Math.pow(2, exponent);
     }
 
@@ -105,7 +98,7 @@ class JSVM {
         for (let i = 0; i < length; i++) {
             str += String.fromCharCode(this.readByte())
         }
-        vmlog(`JSVM > Read string of length ${length}: ${str}`)
+        log(`Read string of length ${length}: ${str}`)
         return str
     }
 
@@ -124,7 +117,7 @@ class JSVM {
 
     loadDependencies(dependencies) {
         Object.keys(dependencies).forEach((key) => {
-            vmlog(`JSVM > Loading dependency to register ${key}: ${dependencies[key]}`)
+            log(`Loading dependency to register ${key}: ${dependencies[key]}`)
             this.write(parseInt(key), dependencies[key])
         })
     }
@@ -134,19 +127,19 @@ class JSVM {
             const opcode = this.readByte()
             if (opcode === undefined || opNames[opcode] === "END") {
                 // treat as end
-                vmlog(`JSVM > [IP = ${this.read(registers.INSTRUCTION_POINTER) - 1}]: End of execution`)
+                log(`[IP = ${this.read(registers.INSTRUCTION_POINTER) - 1}]: End of execution`)
                 break
             }
             if (!this.opcodes[opcode]) {
-                vmlog(`JSVM > [IP = ${this.read(registers.INSTRUCTION_POINTER) - 1}]: Unknown opcode ${opcode}`)
+                log(`[IP = ${this.read(registers.INSTRUCTION_POINTER) - 1}]: Unknown opcode ${opcode}`)
                 // treat as NOP
                 continue
             }
-            vmlog(`JSVM > [IP = ${this.read(registers.INSTRUCTION_POINTER) - 1}]: Executing ${opNames[opcode]}`)
+            log(`[IP = ${this.read(registers.INSTRUCTION_POINTER) - 1}]: Executing ${opNames[opcode]}`)
             try {
                 this.opcodes[opcode]()
             } catch (e) {
-                vmlog(`JSVM > ${e.toString()} at IP = ${this.read(registers.INSTRUCTION_POINTER)}`)
+                log(`${e.toString()} at IP = ${this.read(registers.INSTRUCTION_POINTER)}`)
                 throw e
             }
         }
