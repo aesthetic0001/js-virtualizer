@@ -138,6 +138,10 @@ class FunctionBytecodeGenerator {
         log(new LogData('No available temp load registers!', 'error', false))
     }
 
+    isNestedBinaryExpression(node) {
+        return node.left.type === 'BinaryExpression' || node.right.type === 'BinaryExpression'
+    }
+
     evaluateBinaryExpression(node, root = true) {
         const {left, right, operator} = node;
         const opcode = operatorToOpcode(operator);
@@ -154,49 +158,66 @@ class FunctionBytecodeGenerator {
 
         log(`Evaluating binary expression: ${left.type} ${operator} ${right.type}`)
 
-        switch (left.type) {
-            case 'BinaryExpression': {
-                this.evaluateBinaryExpression(left, false);
-                finalL = this.mergeResult
-                log(`Merged result left is at ${this.TLMap[finalL]}`)
-                break;
-            }
-            case 'Literal': {
-                const reg = this.getAvailableTempLoad()
-                finalL = reg
-                const valueLeft = new BytecodeValue(left.value, reg);
-                this.chunk.append(valueLeft.getLoadOpcode());
-                log(`Loaded literal left: ${left.value} into ${this.TLMap[reg]}`)
-                break;
-            }
-            case 'Identifier': {
-                finalL = this.getVariable(left.name);
-                leftIsImmutable = true
-                log(`Loaded variable left: ${left.name} at register ${finalL}`)
-                break;
+        // dfs down before evaluating
+        if (left.type === 'BinaryExpression' && this.isNestedBinaryExpression(left)) {
+            this.evaluateBinaryExpression(left, false);
+            finalL = this.mergeResult
+            log(`Merged result left is at ${this.TLMap[finalL]}`)
+        }
+
+        if (right.type === 'BinaryExpression' && this.isNestedBinaryExpression(right)) {
+            this.evaluateBinaryExpression(right, false);
+            finalR = this.mergeResult
+            log(`Merged result right is at ${this.TLMap[finalR]}`)
+        }
+
+        if (!finalL) {
+            switch (left.type) {
+                case 'BinaryExpression': {
+                    this.evaluateBinaryExpression(left, false);
+                    finalL = this.mergeResult
+                    log(`Merged result left is at ${this.TLMap[finalL]}`)
+                    break;
+                }
+                case 'Literal': {
+                    const reg = this.getAvailableTempLoad()
+                    finalL = reg
+                    const valueLeft = new BytecodeValue(left.value, reg);
+                    this.chunk.append(valueLeft.getLoadOpcode());
+                    log(`Loaded literal left: ${left.value} into ${this.TLMap[reg]}`)
+                    break;
+                }
+                case 'Identifier': {
+                    finalL = this.getVariable(left.name);
+                    leftIsImmutable = true
+                    log(`Loaded variable left: ${left.name} at register ${finalL}`)
+                    break;
+                }
             }
         }
 
-        switch (right.type) {
-            case 'BinaryExpression': {
-                this.evaluateBinaryExpression(right, false);
-                finalR = this.mergeResult
-                log(`Merged result right is at ${this.TLMap[finalR]}`)
-                break;
-            }
-            case 'Literal': {
-                const reg = this.getAvailableTempLoad()
-                finalR = reg
-                const valueRight = new BytecodeValue(right.value, reg);
-                this.chunk.append(valueRight.getLoadOpcode());
-                log(`Loaded literal right: ${right.value} into ${this.TLMap[reg]}`)
-                break;
-            }
-            case 'Identifier': {
-                finalR = this.getVariable(right.name);
-                rightIsImmutable = true
-                log(`Loaded variable right: ${right.name} at register ${finalR}`)
-                break
+        if (!finalR) {
+            switch (right.type) {
+                case 'BinaryExpression': {
+                    this.evaluateBinaryExpression(right, false);
+                    finalR = this.mergeResult
+                    log(`Merged result right is at ${this.TLMap[finalR]}`)
+                    break;
+                }
+                case 'Literal': {
+                    const reg = this.getAvailableTempLoad()
+                    finalR = reg
+                    const valueRight = new BytecodeValue(right.value, reg);
+                    this.chunk.append(valueRight.getLoadOpcode());
+                    log(`Loaded literal right: ${right.value} into ${this.TLMap[reg]}`)
+                    break;
+                }
+                case 'Identifier': {
+                    finalR = this.getVariable(right.name);
+                    rightIsImmutable = true
+                    log(`Loaded variable right: ${right.name} at register ${finalR}`)
+                    break
+                }
             }
         }
 
