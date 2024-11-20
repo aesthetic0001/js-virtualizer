@@ -72,9 +72,6 @@ class FunctionBytecodeGenerator {
     constructor(ast, chunk) {
         this.ast = ast;
         this.chunk = chunk || new VMChunk();
-        this.astIDCounter = 0
-        this.astGraph = {}
-        this.idToNode = {}
         this.reservedRegisters = new Set()
         this.outputRegister = this.randomRegister();
 
@@ -102,8 +99,6 @@ class FunctionBytecodeGenerator {
         // variables that are currently in the active scope, map of variable name to array of registers,
         // where the last element is the most recent register (active reference)
         this.activeVariables = {}
-
-        this.astToGraph(ast)
     }
 
     declareVariable(variableName, register) {
@@ -153,107 +148,81 @@ class FunctionBytecodeGenerator {
                 TL1: true, TL2: true, TL3: true
             }
         }
-        // topo sort the binary expression tree
-        const indegree = {}
 
-        // assign an ID to each node
+        let finalL, finalR
+        let leftIsImmutable = false, rightIsImmutable = false
 
-        //
-        // let finalL, finalR
-        // let leftIsImmutable = false, rightIsImmutable = false
-        //
-        // log(`Evaluating binary expression: ${left.type} ${operator} ${right.type}`)
-        //
-        // switch (left.type) {
-        //     case 'BinaryExpression': {
-        //         this.evaluateBinaryExpression(left, false);
-        //         finalL = this.mergeResult
-        //         log(`Merged result left is at ${this.TLMap[finalL]}`)
-        //         break;
-        //     }
-        //     case 'Literal': {
-        //         const reg = this.getAvailableTempLoad()
-        //         finalL = reg
-        //         const valueLeft = new BytecodeValue(left.value, reg);
-        //         this.chunk.append(valueLeft.getLoadOpcode());
-        //         log(`Loaded literal left: ${left.value} into ${this.TLMap[reg]}`)
-        //         break;
-        //     }
-        //     case 'Identifier': {
-        //         finalL = this.getVariable(left.name);
-        //         leftIsImmutable = true
-        //         log(`Loaded variable left: ${left.name} at register ${finalL}`)
-        //         break;
-        //     }
-        // }
-        //
-        // switch (right.type) {
-        //     case 'BinaryExpression': {
-        //         this.evaluateBinaryExpression(right, false);
-        //         finalR = this.mergeResult
-        //         log(`Merged result right is at ${this.TLMap[finalR]}`)
-        //         break;
-        //     }
-        //     case 'Literal': {
-        //         const reg = this.getAvailableTempLoad()
-        //         finalR = reg
-        //         const valueRight = new BytecodeValue(right.value, reg);
-        //         this.chunk.append(valueRight.getLoadOpcode());
-        //         log(`Loaded literal right: ${right.value} into ${this.TLMap[reg]}`)
-        //         break;
-        //     }
-        //     case 'Identifier': {
-        //         finalR = this.getVariable(right.name);
-        //         rightIsImmutable = true
-        //         log(`Loaded variable right: ${right.name} at register ${finalR}`)
-        //         break
-        //     }
-        // }
-        //
-        // // always merge to the left
-        // const mergeTo = (leftIsImmutable) ? (rightIsImmutable ? this.getAvailableTempLoad() : finalR) : finalL
-        // this.chunk.append(new Opcode(opcode, mergeTo, finalL, finalR));
-        // this.mergeResult = mergeTo
-        // const leftTL = this.TLMap[finalL]
-        // const rightTL = this.TLMap[finalR]
-        // const mergedTL = this.TLMap[mergeTo]
-        // log(`Merge result stored in ${mergedTL}`)
-        // if (leftTL && leftTL !== mergedTL) {
-        //     this.available[leftTL] = true
-        //     log(`Freed ${leftTL}`)
-        // }
-        // if (rightTL && rightTL !== mergedTL) {
-        //     this.available[rightTL] = true
-        //     log(`Freed ${rightTL}`)
-        // }
-        // this.previousLoad = mergeTo
-        // log(`Evaluated binary expression: ${left.type} ${operator} ${right.type} to ${this.TLMap[mergeTo]}`)
-    }
+        log(`Evaluating binary expression: ${left.type} ${operator} ${right.type}`)
 
-    astToGraph(block, parent) {
-        if (parent !== undefined && !this.astGraph[parent]) this.astGraph[parent] = []
-        for (const node of block) {
-            node.jsvmID = this.astIDCounter++
-            this.idToNode[node.jsvmID] = node
-            if (parent !== undefined) this.astGraph[parent].push(node.jsvmID)
-            if (node.body) {
-                this.astToGraph(node.body, node.jsvmID)
+        switch (left.type) {
+            case 'BinaryExpression': {
+                this.evaluateBinaryExpression(left, false);
+                finalL = this.mergeResult
+                log(`Merged result left is at ${this.TLMap[finalL]}`)
+                break;
             }
-            if (node.argument) {
-                this.astToGraph([node.argument], node.jsvmID)
+            case 'Literal': {
+                const reg = this.getAvailableTempLoad()
+                finalL = reg
+                const valueLeft = new BytecodeValue(left.value, reg);
+                this.chunk.append(valueLeft.getLoadOpcode());
+                log(`Loaded literal left: ${left.value} into ${this.TLMap[reg]}`)
+                break;
             }
-            if (node.left) {
-                this.astToGraph([node.left], node.jsvmID)
-            }
-            if (node.right) {
-                this.astToGraph([node.right], node.jsvmID)
+            case 'Identifier': {
+                finalL = this.getVariable(left.name);
+                leftIsImmutable = true
+                log(`Loaded variable left: ${left.name} at register ${finalL}`)
+                break;
             }
         }
+
+        switch (right.type) {
+            case 'BinaryExpression': {
+                this.evaluateBinaryExpression(right, false);
+                finalR = this.mergeResult
+                log(`Merged result right is at ${this.TLMap[finalR]}`)
+                break;
+            }
+            case 'Literal': {
+                const reg = this.getAvailableTempLoad()
+                finalR = reg
+                const valueRight = new BytecodeValue(right.value, reg);
+                this.chunk.append(valueRight.getLoadOpcode());
+                log(`Loaded literal right: ${right.value} into ${this.TLMap[reg]}`)
+                break;
+            }
+            case 'Identifier': {
+                finalR = this.getVariable(right.name);
+                rightIsImmutable = true
+                log(`Loaded variable right: ${right.name} at register ${finalR}`)
+                break
+            }
+        }
+
+        // always merge to the left
+        const mergeTo = (leftIsImmutable) ? (rightIsImmutable ? this.getAvailableTempLoad() : finalR) : finalL
+        this.chunk.append(new Opcode(opcode, mergeTo, finalL, finalR));
+        this.mergeResult = mergeTo
+        const leftTL = this.TLMap[finalL]
+        const rightTL = this.TLMap[finalR]
+        const mergedTL = this.TLMap[mergeTo]
+        log(`Merge result stored in ${mergedTL}`)
+        if (leftTL && leftTL !== mergedTL) {
+            this.available[leftTL] = true
+            log(`Freed ${leftTL}`)
+        }
+        if (rightTL && rightTL !== mergedTL) {
+            this.available[rightTL] = true
+            log(`Freed ${rightTL}`)
+        }
+        this.previousLoad = mergeTo
+        log(`Evaluated binary expression: ${left.type} ${operator} ${right.type} to ${this.TLMap[mergeTo]}`)
     }
 
     // generate bytecode for all converted values
     generate(block) {
-        block = block ?? this.ast
+        block = block || this.ast
         this.activeScopes.push([])
         // perform a DFS on the block
         for (const node of block) {
