@@ -255,23 +255,70 @@ class FunctionBytecodeGenerator {
                     for (const declaration of node.declarations) {
                         this.declareVariable(declaration.id.name, this.randomRegister());
                         if (declaration.init) {
-                            const value = new BytecodeValue(declaration.init.value, this.getVariable(node.id.name));
-                            this.chunk.append(value.getLoadOpcode());
+                            switch (declaration.init.type) {
+                                case 'Literal': {
+                                    log(`Loading literal ${declaration.init.value} into variable ${declaration.id.name} at register ${this.getVariable(declaration.id.name)}`)
+                                    const value = new BytecodeValue(declaration.init.value, this.getVariable(declaration.id.name));
+                                    this.chunk.append(value.getLoadOpcode());
+                                    break;
+                                }
+                                case 'Identifier': {
+                                    const register = this.getVariable(declaration.init.name);
+                                    log(`Loading variable ${declaration.init.name} into variable ${declaration.id.name} at register ${this.getVariable(declaration.id.name)}`)
+                                    this.chunk.append(new Opcode('SET_REF', this.getVariable(declaration.id.name), register));
+                                    break;
+                                }
+                                case 'BinaryExpression': {
+                                    this.evaluateBinaryExpression(declaration.init);
+                                    log(`Loading binary expression into variable ${declaration.id.name} at register ${this.getVariable(declaration.id.name)}`)
+                                    this.chunk.append(new Opcode('SET_REF', this.getVariable(declaration.id.name), this.previousLoad));
+                                    break;
+                                }
+                            }
                         }
                     }
                     break;
                 }
-                case 'VariableDeclarator': {
-                    this.declareVariable(node.id.name, this.randomRegister());
-                    if (node.init) {
-                        const value = new BytecodeValue(node.init.value, this.getVariable(node.id.name));
-                        this.chunk.append(value.getLoadOpcode());
+                case 'ExpressionStatement': {
+                    switch (node.expression.type) {
+                        case 'AssignmentExpression': {
+                            const {left, right, operator} = node.expression;
+                            const register = this.getVariable(left.name);
+                            let rightRegister
+                            switch (right.type) {
+                                case 'Literal': {
+                                    const value = new BytecodeValue(right.value, this.randomRegister());
+                                    this.chunk.append(value.getLoadOpcode());
+                                    rightRegister = value.register
+                                    break;
+                                }
+                                case 'Identifier': {
+                                    rightRegister = this.getVariable(right.name);
+                                    break;
+                                }
+                                case 'BinaryExpression': {
+                                    this.evaluateBinaryExpression(right);
+                                    rightRegister = this.previousLoad
+                                    break;
+                                }
+                            }
+
+                            switch (operator) {
+                                case '=': {
+                                    log(`Evaluating regular assignment expression with SET_REF`)
+                                    this.chunk.append(new Opcode('SET_REF', register, rightRegister));
+                                    break;
+                                }
+                                default: {
+                                    const opcode = operatorToOpcode(operator.slice(0, -1));
+                                    log(`Evaluating inclusive assignment expression with ${operator} using ${opcode}`)
+                                    this.chunk.append(new Opcode(opcode, register, register, rightRegister));
+                                }
+                            }
+                            break;
+                        }
                     }
-                    break;
-                }
-                case 'BinaryExpression': {
-                    this.evaluateBinaryExpression(node);
-                    break;
+                    break
                 }
                 case 'ReturnStatement': {
                     switch (node.argument.type) {
