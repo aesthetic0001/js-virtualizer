@@ -68,6 +68,8 @@ function operatorToOpcode(operator) {
     }
 }
 
+const TL_COUNT = 4
+
 class FunctionBytecodeGenerator {
     constructor(ast, chunk) {
         this.ast = ast;
@@ -76,23 +78,20 @@ class FunctionBytecodeGenerator {
         this.outputRegister = this.randomRegister();
 
         // for arithmetics
-        this.TL1 = this.randomRegister();
-        this.TL2 = this.randomRegister();
-        this.TL3 = this.randomRegister();
+        this.available = {}
+        this.TLMap = {}
+        for (let i = 1; i <= TL_COUNT; i++) {
+            const regName = `TL${i}`
+            this[regName] = this.randomRegister();
+            this.TLMap[this[regName]] = regName
+            this.available[regName] = true
+        }
         this.previousLoad = null
-        this.available = {
-            TL1: true, TL2: true, TL3: true
-        }
-        this.TLMap = {
-            [this.TL1]: 'TL1', [this.TL2]: 'TL2', [this.TL3]: 'TL3'
-        }
         this.mergeResult = null
 
         log(new LogData(`Output register: ${this.outputRegister}`, 'accent', false))
-        log(new LogData(`Temp Loader 1: ${this.TL1} | Temp Loader 2: ${this.TL2} | Temp Loader 3: ${this.TL3}`, 'accent', false))
 
         // for variable contexts
-
         // variables declared by the scope, array of array of variable names
         // 0th element is the global scope, subsequent elements are nested scopes
         this.activeScopes = [[]]
@@ -129,7 +128,9 @@ class FunctionBytecodeGenerator {
     }
 
     getAvailableTempLoad() {
+        console.log(this.available)
         for (const [register, available] of Object.entries(this.available)) {
+            console.log(register, available)
             if (available) {
                 this.available[register] = false
                 return this[register]
@@ -148,8 +149,8 @@ class FunctionBytecodeGenerator {
 
         if (root) {
             // reset the available registers
-            this.available = {
-                TL1: true, TL2: true, TL3: true
+            for (const [register, _] of Object.entries(this.available)) {
+                this.available[register] = true
             }
         }
 
