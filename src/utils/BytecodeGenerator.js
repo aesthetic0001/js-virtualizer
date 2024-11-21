@@ -128,9 +128,7 @@ class FunctionBytecodeGenerator {
     }
 
     getAvailableTempLoad() {
-        console.log(this.available)
         for (const [register, available] of Object.entries(this.available)) {
-            console.log(register, available)
             if (available) {
                 this.available[register] = false
                 return this[register]
