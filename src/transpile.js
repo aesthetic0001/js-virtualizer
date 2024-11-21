@@ -8,6 +8,7 @@ const crypto = require("crypto");
 const {FunctionBytecodeGenerator} = require("./utils/BytecodeGenerator");
 const escodegen = require("escodegen");
 const {log, LogData} = require("./utils/log");
+const zlib = require("node:zlib");
 const encodings = ['base64', 'hex']
 
 function virtualizeFunctions(code) {
@@ -69,7 +70,7 @@ function virtualizeFunctions(code) {
 
         generator.generate();
 
-        const bytecode = generator.getBytecode().toString(encoding);
+        const bytecode = zlib.deflateSync(Buffer.from(generator.getBytecode())).toString(encoding);
         const virtualizedFunction = functionWrapperTemplate
             .replace("%FUNCTION_NAME%", node.id.name)
             .replace("%ARGS%", node.params.map((param) => param.name).join(","))

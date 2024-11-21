@@ -1,6 +1,7 @@
 const {registers, opcodes, opNames, registerNames, reservedNames} = require("./utils/constants");
 const implOpcode = require("./utils/opcodes");
-const {log} = require("./utils/log");
+const {log, LogData} = require("./utils/log");
+const zlib = require("node:zlib");
 
 // compiler is expected to load all dependencies into registers prior to future execution
 // a JSVM instance. a new one should be created for every virtualized function so that they are able to run concurrently without interfering with each other
@@ -103,15 +104,17 @@ class JSVM {
     }
 
     loadFromString(code, format) {
-        switch (format) {
-            case 'base64':
-                this.code = Buffer.from(code, 'base64')
-                break
-            case 'hex':
-                this.code = Buffer.from(code, 'hex')
-                break
-            default:
-                this.code = Buffer.from(code)
+        if (!format) {
+            // assume buffer
+            this.code = code
+            return
+        }
+        const buffer = Buffer.from(code, format)
+        if (buffer[0] === 0x78 && buffer[1] === 0x9c) {
+            log(new LogData("Decompressing zlib compressed bytecode", 'accent', true))
+            this.code = zlib.inflateSync(buffer)
+        } else {
+            this.code = buffer
         }
     }
 
