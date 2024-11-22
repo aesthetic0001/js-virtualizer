@@ -77,7 +77,9 @@ class FunctionBytecodeGenerator {
         this.reservedRegisters = new Set()
         this.outputRegister = this.randomRegister();
 
-        // for arithmetics
+        // for arithmetics and loading values
+        // binary expressions requires 4 registers to evaluate to one TL register as the result
+        // member expressions requires
         this.available = {}
         this.TLMap = {}
         for (let i = 1; i <= TL_COUNT; i++) {
@@ -86,9 +88,6 @@ class FunctionBytecodeGenerator {
             this.TLMap[this[regName]] = regName
             this.available[regName] = true
         }
-        this.previousLoad = null
-        this.mergeResult = null
-
         log(new LogData(`Output register: ${this.outputRegister}`, 'accent', false))
 
         // for variable contexts
@@ -141,16 +140,14 @@ class FunctionBytecodeGenerator {
         return node.left.type === 'BinaryExpression' || node.right.type === 'BinaryExpression'
     }
 
-    evaluateBinaryExpression(node, root = true) {
+    freeTempLoad(register) {
+        this.available[this.TLMap[register]] = true
+    }
+
+    // remember to free the tempload after using it
+    evaluateBinaryExpression(node) {
         const {left, right, operator} = node;
         const opcode = operatorToOpcode(operator);
-
-        if (root) {
-            // reset the available registers
-            for (const [register, _] of Object.entries(this.available)) {
-                this.available[register] = true
-            }
-        }
 
         let finalL, finalR
         let leftIsImmutable = false, rightIsImmutable = false
@@ -159,22 +156,19 @@ class FunctionBytecodeGenerator {
 
         // dfs down before evaluating
         if (left.type === 'BinaryExpression' && this.isNestedBinaryExpression(left)) {
-            this.evaluateBinaryExpression(left, false);
-            finalL = this.mergeResult
+            finalL = this.evaluateBinaryExpression(left);
             log(`Merged result left is at ${this.TLMap[finalL]}`)
         }
 
         if (right.type === 'BinaryExpression' && this.isNestedBinaryExpression(right)) {
-            this.evaluateBinaryExpression(right, false);
-            finalR = this.mergeResult
+            finalR = this.evaluateBinaryExpression(right);
             log(`Merged result right is at ${this.TLMap[finalR]}`)
         }
 
         if (!finalL) {
             switch (left.type) {
                 case 'BinaryExpression': {
-                    this.evaluateBinaryExpression(left, false);
-                    finalL = this.mergeResult
+                    finalL = this.evaluateBinaryExpression(left);
                     log(`Merged result left is at ${this.TLMap[finalL]}`)
                     break;
                 }
@@ -198,8 +192,7 @@ class FunctionBytecodeGenerator {
         if (!finalR) {
             switch (right.type) {
                 case 'BinaryExpression': {
-                    this.evaluateBinaryExpression(right, false);
-                    finalR = this.mergeResult
+                    finalR = this.evaluateBinaryExpression(right);
                     log(`Merged result right is at ${this.TLMap[finalR]}`)
                     break;
                 }
@@ -223,22 +216,34 @@ class FunctionBytecodeGenerator {
         // always merge to the left
         const mergeTo = (leftIsImmutable) ? (rightIsImmutable ? this.getAvailableTempLoad() : finalR) : finalL
         this.chunk.append(new Opcode(opcode, mergeTo, finalL, finalR));
-        this.mergeResult = mergeTo
         const leftTL = this.TLMap[finalL]
         const rightTL = this.TLMap[finalR]
         const mergedTL = this.TLMap[mergeTo]
         log(`Merge result stored in ${mergedTL}`)
         if (leftTL && leftTL !== mergedTL) {
-            this.available[leftTL] = true
+            this.freeTempLoad(finalL)
             log(`Freed ${leftTL}`)
         }
         if (rightTL && rightTL !== mergedTL) {
-            this.available[rightTL] = true
+            this.freeTempLoad(finalR)
             log(`Freed ${rightTL}`)
         }
-        this.previousLoad = mergeTo
         log(`Evaluated binary expression: ${left.type} ${operator} ${right.type} to ${this.TLMap[mergeTo]}`)
+        return mergeTo
     }
+
+    // returns the register with the result of the expression
+    // resolveMemberExpression(node, outputRegister) {
+    //     outputRegister = outputRegister ?? this.randomRegister();
+    //     const
+    //     return outputRegister
+    // }
+    //
+    // resolveCallExpression(node, outputRegister) {
+    //     outputRegister = outputRegister ?? this.randomRegister();
+    //
+    //     return outputRegister
+    // }
 
     // generate bytecode for all converted values
     generate(block) {
@@ -269,9 +274,10 @@ class FunctionBytecodeGenerator {
                                     break;
                                 }
                                 case 'BinaryExpression': {
-                                    this.evaluateBinaryExpression(declaration.init);
+                                    const out = this.evaluateBinaryExpression(declaration.init);
                                     log(`Loading binary expression into variable ${declaration.id.name} at register ${this.getVariable(declaration.id.name)}`)
-                                    this.chunk.append(new Opcode('SET_REF', this.getVariable(declaration.id.name), this.previousLoad));
+                                    this.chunk.append(new Opcode('SET_REF', this.getVariable(declaration.id.name), out));
+                                    this.freeTempLoad(out)
                                     break;
                                 }
                             }
@@ -297,8 +303,8 @@ class FunctionBytecodeGenerator {
                                     break;
                                 }
                                 case 'BinaryExpression': {
-                                    this.evaluateBinaryExpression(right);
-                                    rightRegister = this.previousLoad
+                                    rightRegister = this.evaluateBinaryExpression(right);
+                                    this.freeTempLoad(rightRegister)
                                     break;
                                 }
                             }
@@ -333,8 +339,9 @@ class FunctionBytecodeGenerator {
                             break;
                         }
                         case 'BinaryExpression': {
-                            this.evaluateBinaryExpression(node.argument);
-                            this.chunk.append(new Opcode('SET_REF', this.outputRegister, this.previousLoad));
+                            const out = this.evaluateBinaryExpression(node.argument)
+                            this.chunk.append(new Opcode('SET_REF', this.outputRegister, out));
+                            this.freeTempLoad(out)
                             break;
                         }
                     }
