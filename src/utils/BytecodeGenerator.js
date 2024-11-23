@@ -1,12 +1,12 @@
-const {VMChunk, Opcode, encodeDWORD, encodeFloat, encodeString} = require("./assembler");
+const {VMChunk, Opcode, encodeDWORD, encodeFloat, encodeString, BytecodeValue} = require("./assembler");
 const crypto = require("crypto");
-const {registerNames} = require("./constants");
+const {registerNames, operatorToOpcode} = require("./constants");
 const {log, LogData} = require("./log");
 const resolveBinaryExpression = require("../transpile/BinaryExpression");
 const resolveMemberExpression = require("../transpile/MemberExpression");
 const resolveCallExpression = require("../transpile/CallExpression");
 
-const TL_COUNT = 8
+const TL_COUNT = 12
 
 class FunctionBytecodeGenerator {
     constructor(ast, chunk) {
@@ -123,6 +123,20 @@ class FunctionBytecodeGenerator {
                                     this.freeTempLoad(out)
                                     break;
                                 }
+                                case 'MemberExpression': {
+                                    const out = this.resolveMemberExpression(declaration.init);
+                                    log(`Loading member expression into variable ${declaration.id.name} at register ${this.getVariable(declaration.id.name)}`)
+                                    this.chunk.append(new Opcode('SET_REF', this.getVariable(declaration.id.name), out));
+                                    this.freeTempLoad(out)
+                                    break;
+                                }
+                                case 'CallExpression': {
+                                    const out = this.resolveCallExpression(declaration.init);
+                                    log(`Loading call expression into variable ${declaration.id.name} at register ${this.getVariable(declaration.id.name)}`)
+                                    this.chunk.append(new Opcode('SET_REF', this.getVariable(declaration.id.name), out));
+                                    this.freeTempLoad(out)
+                                    break;
+                                }
                             }
                         }
                     }
@@ -150,6 +164,17 @@ class FunctionBytecodeGenerator {
                                     this.freeTempLoad(rightRegister)
                                     break;
                                 }
+                                case 'MemberExpression': {
+                                    rightRegister = this.resolveMemberExpression(right);
+                                    this.freeTempLoad(rightRegister)
+                                    break;
+                                }
+                                case 'CallExpression': {
+                                    log(`Evaluating call expression in assignment`)
+                                    rightRegister = this.resolveCallExpression(right);
+                                    this.freeTempLoad(rightRegister)
+                                    break;
+                                }
                             }
 
                             switch (operator) {
@@ -164,6 +189,11 @@ class FunctionBytecodeGenerator {
                                     this.chunk.append(new Opcode(opcode, register, register, rightRegister));
                                 }
                             }
+                            break;
+                        }
+                        case 'CallExpression': {
+                            const out = this.resolveCallExpression(node.expression)
+                            this.freeTempLoad(out)
                             break;
                         }
                     }
