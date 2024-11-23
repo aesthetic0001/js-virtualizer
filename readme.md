@@ -1,19 +1,22 @@
-# jsvm
+# virtualize.js
 
-a javascript VM for virtualizing functions
+virtualization-based obfuscation for javascript
 
 ---
 
 ![Unit Tests](https://github.com/aesthetic0001/jsvm/actions/workflows/tests.yml/badge.svg)
 
-the jsvm is a runtime which requires a compiler to convert individual **functions** to a custom binary format. this binary format can then be interpreted and executed by the jsvm. it is important to note that jsvm is **not intended for use for entire programs, but rather for individual functions**! There will be an obvious performance hit if you try to run an entire program in jsvm.
+virtualize.js is a proof-of-concept project which brings virtualization-based obfuscation to javascript. In this implementation, bytecode is fed to a virtual machine implemented javascript which runs on its own instruction set. A transpiler is included to convert individual **functions** to opcodes for the VM. It is important to note that virtualize.js is **not intended for use on entire programs, but rather for individual functions**! There will be a significant performance hit if you try to run an entire program through the VM.
 
-## limitations
+## Limitations
 
 - if you try to virtualize a program with async functions, it will not work as it introduces concurrency. jsvm currently does not support async functions in the context of the whole program. however, you can use async functions within virtualized function as they have their own context
-- performance is not guaranteed. jsvm is not intended for use in high-performance applications. it is intended for use in applications where you need to protect your code from reverse engineering
+- performance is not guaranteed. virtualize.js is not intended for use in high-performance applications. it is intended for use in applications where you need to protect your code from reverse engineering
+- no other obfuscation techniques are applied to the input code. virtualize.js is not intended to be used as a standalone obfuscation tool, but rather to be used in conjunction with other obfuscation techniques
 
-## todo
+## Todo
 
-- [ ] add a compiler
-- [ ] add support for async functions
+- [x] transpiler
+- [ ] callbacks
+- [ ] add support for async functions in the context of the whole program
+- [ ] add support for classes and provide a proper `this` property to functions
