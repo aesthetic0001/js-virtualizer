@@ -7,7 +7,7 @@ const object = {
 
 // @virtualize
 function evaluate() {
-    return object.a + object.b + object.c;
+    return object["" + "a"]
 }
 
 console.log(evaluate());

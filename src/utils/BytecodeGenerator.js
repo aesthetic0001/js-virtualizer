@@ -286,6 +286,10 @@ class FunctionBytecodeGenerator {
                     log(`Loaded object: ${object.value} at register ${objectRegister}`)
                     break;
                 }
+                case 'BinaryExpression': {
+                    objectRegister = this.evaluateBinaryExpression(object);
+                    break;
+                }
                 case 'CallExpression': {
                     // todo: impl
                 }
@@ -317,6 +321,10 @@ class FunctionBytecodeGenerator {
                     this.chunk.append(value.getLoadOpcode());
                     propertyRegister = value.register
                     log(`Loaded property: ${property.value} at register ${propertyRegister}`)
+                    break;
+                }
+                case 'BinaryExpression': {
+                    propertyRegister = this.evaluateBinaryExpression(property);
                     break;
                 }
                 case 'CallExpression': {
