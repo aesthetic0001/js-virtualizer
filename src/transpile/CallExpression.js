@@ -19,14 +19,10 @@ function resolveCallExpression(node) {
     }
 
     argumentRegisters = arguments.map(arg => {
-        switch (arg.type) {
-            case 'CallExpression': {
-                if (isNestedCallExpression(arg)) {
-                    return this.resolveMemberExpression(arg);
-                }
-                return arg
-            }
+        if (arg.type === 'CallExpression' && isNestedCallExpression(arg)) {
+            return this.resolveMemberExpression(arg);
         }
+        return arg
     })
 
     if (!calleeRegister) {
@@ -64,6 +60,9 @@ function resolveCallExpression(node) {
     const alloced = []
 
     argumentRegisters = argumentRegisters.map(arg => {
+        if (typeof arg === 'number') {
+            return arg
+        }
         switch (arg.type) {
             case 'CallExpression': {
                 return this.resolveMemberExpression(arg);
@@ -89,6 +88,7 @@ function resolveCallExpression(node) {
     this.chunk.append(new Opcode('FUNC_CALL', calleeRegister, mergeTo, registers.VOID, ...encodeArrayRegisters(argumentRegisters)));
     log(`Merged call result is at ${this.TLMap[mergeTo]} (${mergeTo})`)
     for (const reg of alloced) {
+        log(`Freed register ${reg}`)
         this.removeRegister(reg)
     }
     return mergeTo
