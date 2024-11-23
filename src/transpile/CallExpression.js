@@ -1,5 +1,5 @@
 const {log, LogData} = require("../utils/log");
-const {Opcode, BytecodeValue} = require("../utils/assembler");
+const {Opcode, BytecodeValue, encodeArrayRegisters} = require("../utils/assembler");
 const {registers} = require("../utils/constants");
 
 function isNestedCallExpression(node) {
@@ -85,10 +85,9 @@ function resolveCallExpression(node) {
             }
         }
     })
-
-    const mergeTo = reuseCandidate || this.getAvailableTempLoad()
-    this.chunk.append(new Opcode('FUNC_CALL', calleeRegister, mergeTo, registers.VOID, ...argumentRegisters));
-    log(`Merged call result is at ${this.TLMap[mergeTo]}`)
+    const mergeTo = reuseCandidate ?? this.getAvailableTempLoad()
+    this.chunk.append(new Opcode('FUNC_CALL', calleeRegister, mergeTo, registers.VOID, ...encodeArrayRegisters(argumentRegisters)));
+    log(`Merged call result is at ${this.TLMap[mergeTo]} (${mergeTo})`)
     for (const reg of alloced) {
         this.removeRegister(reg)
     }

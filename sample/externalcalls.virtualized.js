@@ -1,12 +1,15 @@
 const JSVM = require('../src/vm');
-function call() {
-    console.log('Outside call');
-}
+const object = {
+    call: function () {
+        console.log('External call');
+        return 3 + 3;
+    }
+};
 function evaluate() {
     const VM = new JSVM();
-    VM.loadFromString('789c63737167e44f7357030005e50175', 'hex');
-    VM.loadDependencies({ 68: call });
+    VM.loadFromString('eJxjvsPAwMCSnJiTI3Qn6Q7bHW1GBn4bbTUATigGVg==', 'base64');
+    VM.loadDependencies({ 98: object });
     VM.run();
-    return VM.registers[102];
+    return VM.registers[60];
 }
 console.log(evaluate());

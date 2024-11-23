@@ -1,4 +1,5 @@
 const {registers} = require("./constants");
+const {log} = require("./log");
 
 const implOpcode = {
     LOAD_BYTE: function () {
@@ -32,6 +33,7 @@ const implOpcode = {
     FUNC_CALL: function () {
         const fn = this.readByte(), dst = this.readByte(),
             funcThis = this.readByte(), args = this.readArray();
+        log(`Calling function at register ${fn} with this at register ${funcThis} and args: ${args}`);
         const res = this.read(fn).apply(this.read(funcThis), args);
         this.write(dst, res);
     },
@@ -126,6 +128,7 @@ const implOpcode = {
     },
     GET_PROP: function () {
         const dest = this.readByte(), object = this.readByte(), prop = this.readByte();
+        log(`Getting property ${this.read(prop)} from object`)
         this.write(dest, this.read(object)[this.read(prop)]);
     },
     EQ: function () {

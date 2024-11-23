@@ -1,12 +1,15 @@
 const JSVM = require("../src/vm");
 
-function call() {
-    console.log("Outside call");
+const object = {
+    call: function() {
+        console.log('External call');
+        return 3 + 3;
+    }
 }
 
 // @virtualize
 function evaluate() {
-    return call()
+    return object.call();
 }
 
 console.log(evaluate());
