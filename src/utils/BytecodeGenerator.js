@@ -4,6 +4,7 @@ const {registerNames} = require("./constants");
 const {log, LogData} = require("./log");
 const resolveBinaryExpression = require("../transpile/BinaryExpression");
 const resolveMemberExpression = require("../transpile/MemberExpression");
+const resolveCallExpression = require("../transpile/CallExpression");
 
 const TL_COUNT = 8
 
@@ -37,6 +38,7 @@ class FunctionBytecodeGenerator {
 
         this.resolveBinaryExpression = resolveBinaryExpression.bind(this)
         this.resolveMemberExpression = resolveMemberExpression.bind(this)
+        this.resolveCallExpression = resolveCallExpression.bind(this)
     }
 
     declareVariable(variableName, register) {
@@ -187,6 +189,12 @@ class FunctionBytecodeGenerator {
                         }
                         case 'MemberExpression': {
                             const out = this.resolveMemberExpression(node.argument)
+                            this.chunk.append(new Opcode('SET_REF', this.outputRegister, out));
+                            this.freeTempLoad(out)
+                            break;
+                        }
+                        case 'CallExpression': {
+                            const out = this.resolveCallExpression(node.argument)
                             this.chunk.append(new Opcode('SET_REF', this.outputRegister, out));
                             this.freeTempLoad(out)
                             break;
