@@ -6,9 +6,9 @@ const object = {
 };
 function evaluate() {
     const VM = new JSVM();
-    VM.loadFromString('789c63ae666060604c14aa0eafe677a856030014df0330', 'hex');
-    VM.loadDependencies({ 87: object });
+    VM.loadFromString('eJxjfsnAwMCYKPQy6yVzDYiZJFSTVSP18mUNhJsM4/JPeKkGAC1ZDsg=', 'base64');
+    VM.loadDependencies({ 106: object });
     VM.run();
-    return VM.registers[64];
+    return VM.registers[144];
 }
 console.log(evaluate());

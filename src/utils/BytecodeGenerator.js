@@ -191,6 +191,10 @@ class FunctionBytecodeGenerator {
                     log(`Loaded variable left: ${left.name} at register ${finalL}`)
                     break;
                 }
+                case 'MemberExpression': {
+                    finalL = this.resolveMemberExpression(left)
+                    break
+                }
             }
         }
 
@@ -213,6 +217,10 @@ class FunctionBytecodeGenerator {
                     finalR = this.getVariable(right.name);
                     rightIsImmutable = true
                     log(`Loaded variable right: ${right.name} at register ${finalR}`)
+                    break
+                }
+                case 'MemberExpression': {
+                    finalR = this.resolveMemberExpression(right)
                     break
                 }
             }
