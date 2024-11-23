@@ -5,7 +5,7 @@ const {log, LogData} = require("./log");
 const resolveBinaryExpression = require("../transpile/BinaryExpression");
 const resolveMemberExpression = require("../transpile/MemberExpression");
 
-const TL_COUNT = 4
+const TL_COUNT = 8
 
 class FunctionBytecodeGenerator {
     constructor(ast, chunk) {
