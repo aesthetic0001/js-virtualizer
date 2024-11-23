@@ -68,6 +68,48 @@ class VMChunk {
     }
 }
 
+class BytecodeValue {
+    constructor(value, register, type) {
+        this.type = type || this.getBytecodeType(value);
+        this.value = value;
+        this.register = register;
+    }
+
+    getBytecodeType(Literal) {
+        switch (typeof Literal) {
+            case 'number': {
+                return Number.isInteger(Literal) ? 'DWORD' : 'FLOAT';
+            }
+            case 'string': {
+                return 'STRING';
+            }
+        }
+    }
+
+    getLoadOpcode() {
+        let encoded
+        switch (this.type) {
+            case 'BYTE': {
+                encoded = this.value;
+                break;
+            }
+            case 'DWORD': {
+                encoded = encodeDWORD(this.value);
+                break;
+            }
+            case 'FLOAT': {
+                encoded = encodeFloat(this.value);
+                break;
+            }
+            case 'STRING': {
+                encoded = encodeString(this.value);
+                break;
+            }
+        }
+        return new Opcode(`LOAD_${this.type}`, this.register, encoded);
+    }
+}
+
 function encodeFloat(float) {
     let sign = 0;
     if (float < 0) {
@@ -173,6 +215,7 @@ function encodeArrayRegisters(array) {
 module.exports = {
     Opcode,
     VMChunk,
+    BytecodeValue,
     encodeString,
     encodeFloat,
     encodeDWORD,

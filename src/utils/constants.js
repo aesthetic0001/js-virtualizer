@@ -122,10 +122,34 @@ for (let i = 0; i < opNames.length; i++) {
     opcodes[opNames[i]] = i
 }
 
+function operatorToOpcode(operator) {
+    switch (operator) {
+        case '+': {
+            return 'ADD';
+        }
+        case '-': {
+            return 'SUBTRACT';
+        }
+        case '*': {
+            return 'MULTIPLY';
+        }
+        case '/': {
+            return 'DIVIDE';
+        }
+        case '%': {
+            return 'MODULO';
+        }
+        case '**': {
+            return 'POWER';
+        }
+    }
+}
+
 module.exports = {
     registerNames,
     reservedNames,
     registers,
     opNames,
-    opcodes
+    opcodes,
+    operatorToOpcode
 }
