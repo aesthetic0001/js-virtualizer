@@ -4,11 +4,11 @@ const {registers, needsCleanup} = require("../utils/constants");
 
 // returns the register with the result of the expression, this should not require early DFS because
 // arguments are resolved and cleaned up immediately after they are used
-function resolveCallExpression(node) {
+function resolveCallExpression(node, thisRegister) {
     const {callee, arguments} = node;
     const calleeRegister = this.resolveExpression(callee).outputRegister
 
-    log(`Resolving call expression: ${callee.type}(${arguments.map(arg => arg.type).join(', ')})`)
+    log(`Resolving call expression: ${callee.type}(${arguments.map(arg => arg.type).join(', ')}) with callee at register ${calleeRegister}`)
 
     const argsRegister = this.getAvailableTempLoad()
     const counterRegister = this.getAvailableTempLoad()
@@ -21,7 +21,7 @@ function resolveCallExpression(node) {
     log(`Allocated array for arguments at ${this.TLMap[argsRegister]} (${argsRegister}) with size ${arguments.length}`)
 
     arguments.forEach((arg, index) => {
-        const valueRegister = this.resolveExpression(arg).outputRegister
+        const valueRegister = this.resolveExpression(arg, {thisRegister}).outputRegister
         log(`Loaded argument ${index} (${arguments[index].type}) at register ${valueRegister}`)
         this.chunk.append(new Opcode('SET_INDEX', argsRegister, counterRegister, valueRegister));
         if (needsCleanup(arg)) this.freeTempLoad(valueRegister)

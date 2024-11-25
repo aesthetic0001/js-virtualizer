@@ -30,7 +30,7 @@ function resolveMemberExpression(node) {
     }
 
     if (!propertyRegister) {
-        const {outputRegister, borrowed} = this.resolveExpression(property, computed);
+        const {outputRegister, borrowed} = this.resolveExpression(property, {computed, thisRegister: objectRegister});
         propertyRegister = outputRegister
         propertyIsImmutable = borrowed
     }

@@ -13,7 +13,7 @@ function resolveObjectExpression(node) {
 
     properties.forEach((kvPair) => {
         const {computed, key, value} = kvPair
-        const keyRegister = this.resolveExpression(key, computed).outputRegister,
+        const keyRegister = this.resolveExpression(key, {computed}).outputRegister,
             valueRegister = this.resolveExpression(value).outputRegister
 
         log(`Resolving object property: ${key.type} ${computed ? 'computed' : 'non-computed'}`)

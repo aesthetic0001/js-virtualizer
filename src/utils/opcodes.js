@@ -51,6 +51,8 @@ const implOpcode = {
         const args = this.read(argsReg);
         log(`Calling function with arraycall convention at register ${fn} with this at register ${funcThis} and args: ${args}`);
         const res = this.read(fn).apply(this.read(funcThis), args);
+        log(`Function call result: ${res} => ${dst}`);
+        console.log(fn, dst, funcThis, args, res);
         this.write(dst, res);
     },
     VFUNC_CALL: function () {
