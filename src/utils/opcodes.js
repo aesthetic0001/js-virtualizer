@@ -30,10 +30,26 @@ const implOpcode = {
         }
         this.write(register, obj);
     },
+    SETUP_OBJECT: function () {
+        const register = this.readByte();
+        this.write(register, {});
+    },
+    SETUP_ARRAY: function () {
+        const register = this.readByte(), size = this.readByte();
+        this.write(register, Array(size));
+    },
     FUNC_CALL: function () {
         const fn = this.readByte(), dst = this.readByte(),
             funcThis = this.readByte(), args = this.readArray();
         log(`Calling function at register ${fn} with this at register ${funcThis} and args: ${args}`);
+        const res = this.read(fn).apply(this.read(funcThis), args);
+        this.write(dst, res);
+    },
+    FUNC_ARRAY_CALL: function () {
+        const fn = this.readByte(), dst = this.readByte(),
+            funcThis = this.readByte(), argsReg = this.readByte();
+        const args = this.read(argsReg);
+        log(`Calling function with arraycall convention at register ${fn} with this at register ${funcThis} and args: ${args}`);
         const res = this.read(fn).apply(this.read(funcThis), args);
         this.write(dst, res);
     },
@@ -119,17 +135,18 @@ const implOpcode = {
         const obj = this.read(object);
         obj[this.read(prop)] = this.read(src);
     },
-    SET_PROPS: function () {
-        const object = this.readByte(), props = this.readArray(), srcs = this.readArray();
-        const obj = this.read(object);
-        for (let i = 0; i < props.length; i++) {
-            obj[this.read(props[i])] = this.read(srcs[i]);
-        }
-    },
     GET_PROP: function () {
         const dest = this.readByte(), object = this.readByte(), prop = this.readByte();
         log(`Getting property ${this.read(prop)} from object`)
         this.write(dest, this.read(object)[this.read(prop)]);
+    },
+    SET_INDEX: function () {
+        const array = this.readByte(), index = this.readByte(), src = this.readByte();
+        this.read(array)[this.read(index)] = this.read(src);
+    },
+    GET_INDEX: function () {
+        const dest = this.readByte(), array = this.readByte(), index = this.readByte();
+        this.write(dest, this.read(array)[this.read(index)]);
     },
     EQ: function () {
         const dest = this.readByte(), left = this.readByte(), right = this.readByte();

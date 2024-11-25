@@ -2,9 +2,9 @@ const {VMChunk, Opcode, encodeDWORD, encodeFloat, encodeString, BytecodeValue} =
 const crypto = require("crypto");
 const {registerNames, operatorToOpcode} = require("./constants");
 const {log, LogData} = require("./log");
-const resolveBinaryExpression = require("../transpile/BinaryExpression");
-const resolveMemberExpression = require("../transpile/MemberExpression");
-const resolveCallExpression = require("../transpile/CallExpression");
+const resolveBinaryExpression = require("../transformations/BinaryExpression");
+const resolveMemberExpression = require("../transformations/MemberExpression");
+const resolveCallExpression = require("../transformations/CallExpression");
 
 const TL_COUNT = 12
 
@@ -16,8 +16,8 @@ class FunctionBytecodeGenerator {
         this.outputRegister = this.randomRegister();
 
         // for arithmetics and loading values
-        // binary expressions requires 4 registers to evaluate to one TL register as the result
-        // member expressions requires 4 as well and is done in a similar way
+        // binary expressions and member expressions need 4 TL each
+        // call expressions need 2 TL each
         this.available = {}
         this.TLMap = {}
         for (let i = 1; i <= TL_COUNT; i++) {

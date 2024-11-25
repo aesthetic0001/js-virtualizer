@@ -27,13 +27,18 @@ const opNames = [
     "LOAD_ARRAY",
     // [register, keys, values]
     "LOAD_OBJECT",
+    // [register] : sets up an empty object {}
+    "SETUP_OBJECT",
+    // [register, size] : sets up an empty array of size
+    "SETUP_ARRAY",
 
     // functions
 
     // - external functions -
     // [fn, dst, functhis (identity), ...args]
     "FUNC_CALL",
-
+    // [fn, dst, functhis (identity), argsReg] : argsReg is a register that contains an array of arguments
+    "FUNC_ARRAY_CALL",
     // - internal functions (defined in bytecode) -
     // argmap should be a list of functionreg: argreg
     // [offset, return_data_store_external, ...argmap]
@@ -62,9 +67,11 @@ const opNames = [
     // [[object], prop, src]
     "SET_PROP",
     // [[object], props, srcs]
-    "SET_PROPS",
-    // [dest, [object], prop]
     "GET_PROP",
+    // [[array], index, src]
+    "SET_INDEX",
+    // [dest, [array], index]
+    "GET_INDEX",
     // [external_ref, src]
     "WRITE_EXT",
 
@@ -145,11 +152,22 @@ function operatorToOpcode(operator) {
     }
 }
 
+const cleanupNecessary = new Set([
+    "BinaryExpression",
+    "CallExpression",
+    "MemberExpression"
+])
+
+function needsCleanup(node) {
+    return typeof node === 'object' && node?.type && cleanupNecessary.has(node.type)
+}
+
 module.exports = {
     registerNames,
     reservedNames,
     registers,
     opNames,
     opcodes,
-    operatorToOpcode
+    operatorToOpcode,
+    needsCleanup
 }
