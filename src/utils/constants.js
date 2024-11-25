@@ -158,6 +158,7 @@ const cleanupNecessary = new Set([
     "BinaryExpression",
     "CallExpression",
     "MemberExpression",
+    "ObjectExpression",
     "Literal"
 ])
 

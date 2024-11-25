@@ -1,57 +1,92 @@
 const {log, LogData} = require("../utils/log");
 const {Opcode, BytecodeValue} = require("../utils/assembler");
+const {needsCleanup} = require("../utils/constants");
 
 function resolveObjectExpression(node) {
     const {properties} = node
 
-    let propertyRegisters = []
+    const objectRegister = this.getAvailableTempLoad()
 
-    propertyRegisters = properties.map(arg => {
-        if (arg.type === 'CallExpression' && isNestedCallExpression(arg)) {
-            // cleaned up in argumentRegisters.forEach
-            return this.resolveCallExpression(arg);
-        }
-        return arg
-    })
+    this.chunk.append(new Opcode('SETUP_OBJECT', objectRegister));
 
-    const objectRegister = this.randomRegister()
-    properties.forEach((property) => {
-        if (!propertyRegister) {
-            switch (property.type) {
-                case 'Identifier': {
-                    if (computed) {
-                        propertyRegister = this.getVariable(property.name);
-                        propertyIsImmutable = true
-                        log(`Loaded property: ${property.name} at register ${propertyRegister}`)
-                    } else {
-                        log(new LogData('Treating non-computed identifier as literal', 'warn', false))
-                        const value = new BytecodeValue(property.name, this.getAvailableTempLoad());
-                        propertyRegister = value.register
-                        this.chunk.append(value.getLoadOpcode());
-                    }
-                    break
+    properties.forEach((kvPair) => {
+        const {computed, key, value} = kvPair
+        let keyRegister, valueRegister
+
+        switch (key.type) {
+            case 'Identifier': {
+                if (computed) {
+                    keyRegister = this.getVariable(key.name);
+                    log(`Loaded property: ${key.name} at register ${keyRegister}`)
+                } else {
+                    log(new LogData('Treating non-computed identifier as literal', 'warn', false))
+                    const literalValue = new BytecodeValue(key.name, this.getAvailableTempLoad());
+                    keyRegister = literalValue.register
+                    this.chunk.append(literalValue.getLoadOpcode());
                 }
-                // same as above, no need to clean up as they will be cleaned up by root caller and automatically merged
-                case 'Literal': {
-                    const value = new BytecodeValue(property.value, this.getAvailableTempLoad());
-                    this.chunk.append(value.getLoadOpcode());
-                    propertyRegister = value.register
-                    log(`Loaded property: ${property.value} at register ${propertyRegister}`)
-                    break;
-                }
-                case 'MemberExpression': {
-                    propertyRegister = this.resolveMemberExpression(property);
-                    break;
-                }
-                case 'BinaryExpression': {
-                    propertyRegister = this.resolveBinaryExpression(property);
-                    break;
-                }
-                case 'CallExpression': {
-                    propertyRegister = this.resolveCallExpression(property);
-                    break
-                }
+                break
+            }
+            case 'Literal': {
+                const value = new BytecodeValue(key.value, this.getAvailableTempLoad());
+                this.chunk.append(value.getLoadOpcode());
+                keyRegister = value.register
+                log(`Loaded property: ${key.value} at register ${keyRegister}`)
+                break;
+            }
+            case 'MemberExpression': {
+                keyRegister = this.resolveMemberExpression(key);
+                break;
+            }
+            case 'BinaryExpression': {
+                keyRegister = this.resolveBinaryExpression(key);
+                break;
+            }
+            case 'CallExpression': {
+                keyRegister = this.resolveCallExpression(key);
+                break
+            }
+            case 'ObjectExpression': {
+                keyRegister = this.resolveObjectExpression(key);
+                break
             }
         }
+
+        switch (value.type) {
+            case 'Identifier': {
+                valueRegister = this.getVariable(value.name);
+                break
+            }
+            case 'Literal': {
+                const tempRegister = this.getAvailableTempLoad();
+                const literalValue = new BytecodeValue(value.value, tempRegister);
+                this.chunk.append(literalValue.getLoadOpcode());
+                valueRegister = literalValue.register
+                break
+            }
+            case 'MemberExpression': {
+                valueRegister = this.resolveMemberExpression(value);
+                break;
+            }
+            case 'BinaryExpression': {
+                valueRegister = this.resolveBinaryExpression(value);
+                break;
+            }
+            case 'CallExpression': {
+                valueRegister = this.resolveCallExpression(value);
+                break
+            }
+            case 'ObjectExpression': {
+                valueRegister = this.resolveObjectExpression(value);
+                break
+            }
+        }
+
+        this.chunk.append(new Opcode('SET_PROP', objectRegister, keyRegister, valueRegister));
+        if (needsCleanup(key)) this.freeTempLoad(keyRegister)
+        if (needsCleanup(value)) this.freeTempLoad(valueRegister)
     })
+
+    return objectRegister
 }
+
+module.exports = resolveObjectExpression

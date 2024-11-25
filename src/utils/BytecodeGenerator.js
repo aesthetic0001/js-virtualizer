@@ -5,6 +5,7 @@ const {log, LogData} = require("./log");
 const resolveBinaryExpression = require("../transformations/BinaryExpression");
 const resolveMemberExpression = require("../transformations/MemberExpression");
 const resolveCallExpression = require("../transformations/CallExpression");
+const resolveObjectExpression = require("../transformations/ObjectExpression");
 
 const TL_COUNT = 14
 
@@ -39,6 +40,7 @@ class FunctionBytecodeGenerator {
         this.resolveBinaryExpression = resolveBinaryExpression.bind(this)
         this.resolveMemberExpression = resolveMemberExpression.bind(this)
         this.resolveCallExpression = resolveCallExpression.bind(this)
+        this.resolveObjectExpression = resolveObjectExpression.bind(this)
     }
 
     declareVariable(variableName, register) {
@@ -133,6 +135,13 @@ class FunctionBytecodeGenerator {
                                 case 'CallExpression': {
                                     const out = this.resolveCallExpression(declaration.init);
                                     log(`Loading call expression into variable ${declaration.id.name} at register ${this.getVariable(declaration.id.name)}`)
+                                    this.chunk.append(new Opcode('SET_REF', this.getVariable(declaration.id.name), out));
+                                    this.freeTempLoad(out)
+                                    break;
+                                }
+                                case 'ObjectExpression': {
+                                    const out = this.resolveObjectExpression(declaration.init);
+                                    log(`Loading object expression into variable ${declaration.id.name} at register ${this.getVariable(declaration.id.name)}`)
                                     this.chunk.append(new Opcode('SET_REF', this.getVariable(declaration.id.name), out));
                                     this.freeTempLoad(out)
                                     break;
