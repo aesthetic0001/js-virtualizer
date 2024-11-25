@@ -52,7 +52,6 @@ function resolveArrayExpression(node) {
         if (needsCleanup(element)) this.freeTempLoad(elementRegister)
         this.chunk.append(new Opcode('ADD', counterRegister, counterRegister, oneRegister))
     })
-
     this.freeTempLoad(counterRegister)
     this.freeTempLoad(oneRegister)
     return arrayRegister

@@ -164,6 +164,7 @@ const cleanupNecessary = new Set([
 ])
 
 function needsCleanup(node) {
+    console.assert(typeof node === 'object', "needsCleanup called with non-object")
     return typeof node === 'object' && node?.type && cleanupNecessary.has(node.type)
 }
 

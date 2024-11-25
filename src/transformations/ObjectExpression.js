@@ -5,6 +5,8 @@ const {needsCleanup} = require("../utils/constants");
 function resolveObjectExpression(node) {
     const {properties} = node
 
+    log(`Resolving object expression: ${properties.map(kv => `${kv.key.type}: ${kv.value.type}`).join(', ')}`)
+
     const objectRegister = this.getAvailableTempLoad()
 
     this.chunk.append(new Opcode('SETUP_OBJECT', objectRegister));
@@ -12,6 +14,8 @@ function resolveObjectExpression(node) {
     properties.forEach((kvPair) => {
         const {computed, key, value} = kvPair
         let keyRegister, valueRegister
+
+        log(`Resolving object property: ${key.type} ${computed ? 'computed' : 'non-computed'}`)
 
         switch (key.type) {
             case 'Identifier': {
@@ -69,28 +73,33 @@ function resolveObjectExpression(node) {
             }
             case 'MemberExpression': {
                 valueRegister = this.resolveMemberExpression(value);
+                log(`Resolved member expression to register ${valueRegister}`)
                 break;
             }
             case 'BinaryExpression': {
                 valueRegister = this.resolveBinaryExpression(value);
+                log(`Resolved binary expression to register ${valueRegister}`)
                 break;
             }
             case 'CallExpression': {
                 valueRegister = this.resolveCallExpression(value);
+                log(`Resolved call expression to register ${valueRegister}`)
                 break
             }
             case 'ObjectExpression': {
                 valueRegister = this.resolveObjectExpression(value);
+                log(`Resolved object expression to register ${valueRegister}`)
                 break
             }
             case 'ArrayExpression': {
                 valueRegister = this.resolveArrayExpression(value);
+                log(`Resolved array expression to register ${valueRegister}`)
                 break
             }
         }
 
         this.chunk.append(new Opcode('SET_PROP', objectRegister, keyRegister, valueRegister));
-        if (needsCleanup(key)) this.freeTempLoad(keyRegister)
+        if (needsCleanup(key) || !computed) this.freeTempLoad(keyRegister)
         if (needsCleanup(value)) this.freeTempLoad(valueRegister)
     })
 

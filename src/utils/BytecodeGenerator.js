@@ -80,6 +80,7 @@ class FunctionBytecodeGenerator {
     getAvailableTempLoad() {
         for (const [register, available] of Object.entries(this.available)) {
             if (available) {
+                log(`Allocating temp load register ${register}`)
                 this.available[register] = false
                 return this[register]
             }
@@ -89,6 +90,7 @@ class FunctionBytecodeGenerator {
 
     // remember to free the tempload after using it
     freeTempLoad(register) {
+        log(`Freeing temp load register ${this.TLMap[register]}`)
         this.available[this.TLMap[register]] = true
     }
 
