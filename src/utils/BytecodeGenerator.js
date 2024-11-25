@@ -1,6 +1,6 @@
 const {VMChunk, Opcode, encodeDWORD, encodeFloat, encodeString, BytecodeValue} = require("./assembler");
 const crypto = require("crypto");
-const {registerNames, operatorToOpcode} = require("./constants");
+const {registerNames, operatorToOpcode, needsCleanup} = require("./constants");
 const {log, LogData} = require("./log");
 const resolveBinaryExpression = require("../transformations/BinaryExpression");
 const resolveMemberExpression = require("../transformations/MemberExpression");
@@ -111,55 +111,9 @@ class FunctionBytecodeGenerator {
                     for (const declaration of node.declarations) {
                         this.declareVariable(declaration.id.name, this.randomRegister());
                         if (declaration.init) {
-                            switch (declaration.init.type) {
-                                case 'Literal': {
-                                    log(`Loading literal ${declaration.init.value} into variable ${declaration.id.name} at register ${this.getVariable(declaration.id.name)}`)
-                                    const value = new BytecodeValue(declaration.init.value, this.getVariable(declaration.id.name));
-                                    this.chunk.append(value.getLoadOpcode());
-                                    break;
-                                }
-                                case 'Identifier': {
-                                    const register = this.getVariable(declaration.init.name);
-                                    log(`Loading variable ${declaration.init.name} into variable ${declaration.id.name} at register ${this.getVariable(declaration.id.name)}`)
-                                    this.chunk.append(new Opcode('SET_REF', this.getVariable(declaration.id.name), register));
-                                    break;
-                                }
-                                case 'BinaryExpression': {
-                                    const out = this.resolveBinaryExpression(declaration.init);
-                                    log(`Loading binary expression into variable ${declaration.id.name} at register ${this.getVariable(declaration.id.name)}`)
-                                    this.chunk.append(new Opcode('SET_REF', this.getVariable(declaration.id.name), out));
-                                    this.freeTempLoad(out)
-                                    break;
-                                }
-                                case 'MemberExpression': {
-                                    const out = this.resolveMemberExpression(declaration.init);
-                                    log(`Loading member expression into variable ${declaration.id.name} at register ${this.getVariable(declaration.id.name)}`)
-                                    this.chunk.append(new Opcode('SET_REF', this.getVariable(declaration.id.name), out));
-                                    this.freeTempLoad(out)
-                                    break;
-                                }
-                                case 'CallExpression': {
-                                    const out = this.resolveCallExpression(declaration.init);
-                                    log(`Loading call expression into variable ${declaration.id.name} at register ${this.getVariable(declaration.id.name)}`)
-                                    this.chunk.append(new Opcode('SET_REF', this.getVariable(declaration.id.name), out));
-                                    this.freeTempLoad(out)
-                                    break;
-                                }
-                                case 'ObjectExpression': {
-                                    const out = this.resolveObjectExpression(declaration.init);
-                                    log(`Loading object expression into variable ${declaration.id.name} at register ${this.getVariable(declaration.id.name)}`)
-                                    this.chunk.append(new Opcode('SET_REF', this.getVariable(declaration.id.name), out));
-                                    this.freeTempLoad(out)
-                                    break;
-                                }
-                                case 'ArrayExpression': {
-                                    const out = this.resolveArrayExpression(declaration.init);
-                                    log(`Loading array expression into variable ${declaration.id.name} at register ${this.getVariable(declaration.id.name)}`)
-                                    this.chunk.append(new Opcode('SET_REF', this.getVariable(declaration.id.name), out));
-                                    this.freeTempLoad(out)
-                                    break;
-                                }
-                            }
+                            const out = this.resolveExpression(declaration.init).outputRegister
+                            this.chunk.append(new Opcode('SET_REF', this.getVariable(declaration.id.name), out));
+                            if (needsCleanup(declaration.init)) this.freeTempLoad(out)
                         }
                     }
                     break;
@@ -168,47 +122,19 @@ class FunctionBytecodeGenerator {
                     switch (node.expression.type) {
                         case 'AssignmentExpression': {
                             const {left, right, operator} = node.expression;
-                            const register = this.getVariable(left.name);
-                            let rightRegister
-                            switch (right.type) {
-                                case 'Literal': {
-                                    const value = new BytecodeValue(right.value, this.randomRegister());
-                                    this.chunk.append(value.getLoadOpcode());
-                                    rightRegister = value.register
-                                    break;
-                                }
-                                case 'Identifier': {
-                                    rightRegister = this.getVariable(right.name);
-                                    break;
-                                }
-                                case 'BinaryExpression': {
-                                    rightRegister = this.resolveBinaryExpression(right);
-                                    this.freeTempLoad(rightRegister)
-                                    break;
-                                }
-                                case 'MemberExpression': {
-                                    rightRegister = this.resolveMemberExpression(right);
-                                    this.freeTempLoad(rightRegister)
-                                    break;
-                                }
-                                case 'CallExpression': {
-                                    log(`Evaluating call expression in assignment`)
-                                    rightRegister = this.resolveCallExpression(right);
-                                    this.freeTempLoad(rightRegister)
-                                    break;
-                                }
-                            }
+                            const leftRegister = this.getVariable(left.name);
+                            const rightRegister = this.resolveExpression(right).outputRegister
 
                             switch (operator) {
                                 case '=': {
                                     log(`Evaluating regular assignment expression with SET_REF`)
-                                    this.chunk.append(new Opcode('SET_REF', register, rightRegister));
+                                    this.chunk.append(new Opcode('SET_REF', leftRegister, rightRegister));
                                     break;
                                 }
                                 default: {
                                     const opcode = operatorToOpcode(operator.slice(0, -1));
                                     log(`Evaluating inclusive assignment expression with ${operator} using ${opcode}`)
-                                    this.chunk.append(new Opcode(opcode, register, register, rightRegister));
+                                    this.chunk.append(new Opcode(opcode, leftRegister, leftRegister, rightRegister));
                                 }
                             }
                             break;
@@ -222,36 +148,9 @@ class FunctionBytecodeGenerator {
                     break
                 }
                 case 'ReturnStatement': {
-                    switch (node.argument.type) {
-                        case 'Literal': {
-                            const value = new BytecodeValue(node.argument.value, this.outputRegister);
-                            this.chunk.append(value.getLoadOpcode());
-                            break;
-                        }
-                        case 'Identifier': {
-                            const register = this.getVariable(node.argument.name);
-                            this.chunk.append(new Opcode('SET_REF', this.outputRegister, register));
-                            break;
-                        }
-                        case 'BinaryExpression': {
-                            const out = this.resolveBinaryExpression(node.argument)
-                            this.chunk.append(new Opcode('SET_REF', this.outputRegister, out));
-                            this.freeTempLoad(out)
-                            break;
-                        }
-                        case 'MemberExpression': {
-                            const out = this.resolveMemberExpression(node.argument)
-                            this.chunk.append(new Opcode('SET_REF', this.outputRegister, out));
-                            this.freeTempLoad(out)
-                            break;
-                        }
-                        case 'CallExpression': {
-                            const out = this.resolveCallExpression(node.argument)
-                            this.chunk.append(new Opcode('SET_REF', this.outputRegister, out));
-                            this.freeTempLoad(out)
-                            break;
-                        }
-                    }
+                    const out = this.resolveExpression(node.argument).outputRegister
+                    this.chunk.append(new Opcode('SET_REF', this.outputRegister, out));
+                    if (needsCleanup(node.argument)) this.freeTempLoad(out)
                 }
             }
         }

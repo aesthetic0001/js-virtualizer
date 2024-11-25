@@ -2,13 +2,13 @@ const JSVM = require('../src/vm');
 const multiplier = 2;
 function evaluate(a, b) {
     const VM = new JSVM();
-    VM.loadFromString('eJyTS2WtkktNFVJIFUqVS61KlW+tEpJrbQWxhRRSU1th4kJNqVoAGw0NFw==', 'base64');
+    VM.loadFromString('eJyTc277LOfsXKjgXOgs5/zZWX7K50K5KVNA7EIFZ+cpMHEhbWctAGxlD5U=', 'base64');
     VM.loadDependencies({
-        5: multiplier,
-        18: b,
-        122: a
+        113: b,
+        134: multiplier,
+        243: a
     });
     VM.run();
-    return VM.registers[130];
+    return VM.registers[43];
 }
 console.log(evaluate(1, 2));
