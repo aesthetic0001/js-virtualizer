@@ -41,9 +41,9 @@ function resolveCallExpression(node) {
     const counterRegister = this.getAvailableTempLoad()
     const oneRegister = this.getAvailableTempLoad()
 
+    this.chunk.append(new Opcode('SETUP_ARRAY', argsRegister, encodeDWORD(arguments.length)));
     this.chunk.append(new Opcode('LOAD_DWORD', counterRegister, encodeDWORD(0)));
     this.chunk.append(new Opcode('LOAD_DWORD', oneRegister, encodeDWORD(1)));
-    this.chunk.append(new Opcode('SETUP_ARRAY', argsRegister, arguments.length));
 
     log(`Allocated array for arguments at ${this.TLMap[argsRegister]} (${argsRegister}) with size ${arguments.length}`)
 

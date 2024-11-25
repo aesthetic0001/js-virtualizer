@@ -35,7 +35,7 @@ const implOpcode = {
         this.write(register, {});
     },
     SETUP_ARRAY: function () {
-        const register = this.readByte(), size = this.readByte();
+        const register = this.readByte(), size = this.readDWORD();
         this.write(register, Array(size));
     },
     FUNC_CALL: function () {

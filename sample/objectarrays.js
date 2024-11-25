@@ -9,10 +9,12 @@ function evaluate() {
             d: 4
         },
         b: 1,
-        c: "2"
+        c: "2",
+        d: [1, 2, 3]
     }
-    // const array = [1, "2"];
+    const array = [1, "2", {a: 3}, [1, 2, 3]]
     console.log(object)
+    console.log(array)
     return 1
 }
 

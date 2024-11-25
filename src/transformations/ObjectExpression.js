@@ -49,6 +49,10 @@ function resolveObjectExpression(node) {
                 keyRegister = this.resolveObjectExpression(key);
                 break
             }
+            case 'ArrayExpression': {
+                keyRegister = this.resolveArrayExpression(key);
+                break
+            }
         }
 
         switch (value.type) {
@@ -77,6 +81,10 @@ function resolveObjectExpression(node) {
             }
             case 'ObjectExpression': {
                 valueRegister = this.resolveObjectExpression(value);
+                break
+            }
+            case 'ArrayExpression': {
+                valueRegister = this.resolveArrayExpression(value);
                 break
             }
         }

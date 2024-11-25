@@ -159,6 +159,7 @@ const cleanupNecessary = new Set([
     "CallExpression",
     "MemberExpression",
     "ObjectExpression",
+    "ArrayExpression",
     "Literal"
 ])
 
