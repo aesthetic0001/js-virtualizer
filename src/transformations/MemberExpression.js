@@ -10,31 +10,28 @@ function resolveMemberExpression(node) {
     const {object, property, computed} = node;
     let objectRegister, propertyRegister
     let objectIsImmutable = false, propertyIsImmutable = false
-    log(`Resolving member expression: ${object.type}.${property.type}`)
+
+    log(`Resolving MemberExpression: ${object.type}.${property.type}`)
 
     if (object.type === 'MemberExpression' && isNestedMemberExpression(object)) {
         objectRegister = this.resolveMemberExpression(object);
-        log(`Merged object result is at ${this.TLMap[objectRegister]}`)
+        log(`Object result is at ${this.TLMap[objectRegister]}`)
     }
 
     if (property.type === 'MemberExpression' && isNestedMemberExpression(property)) {
         propertyRegister = this.resolveMemberExpression(property);
-        log(`Merged property result is at ${this.TLMap[propertyRegister]}`)
+        log(`Property result is at ${this.TLMap[propertyRegister]}`)
     }
 
     if (!objectRegister) {
         switch (object.type) {
-            case 'MemberExpression': {
-                objectRegister = this.resolveMemberExpression(object);
-                log(`Merged object result is at ${this.TLMap[objectRegister]}`)
-                break;
-            }
             case 'Identifier': {
                 objectRegister = this.getVariable(object.name);
                 objectIsImmutable = true
                 log(`Loaded object: ${object.name} at register ${objectRegister}`)
                 break;
             }
+            // these do not need to be cleaned up internally, as they will get merged automatically and cleaned up by root caller in the end
             case 'Literal': {
                 const value = new BytecodeValue(object.value, this.getAvailableTempLoad());
                 this.chunk.append(value.getLoadOpcode());
@@ -42,23 +39,23 @@ function resolveMemberExpression(node) {
                 log(`Loaded object: ${object.value} at register ${objectRegister}`)
                 break;
             }
+            case 'MemberExpression': {
+                objectRegister = this.resolveMemberExpression(object);
+                break;
+            }
             case 'BinaryExpression': {
                 objectRegister = this.resolveBinaryExpression(object);
                 break;
             }
             case 'CallExpression': {
-                // todo: impl
+                objectRegister = this.resolveCallExpression(object);
+                break
             }
         }
     }
 
     if (!propertyRegister) {
         switch (property.type) {
-            case 'MemberExpression': {
-                propertyRegister = this.resolveMemberExpression(property);
-                log(`Merged property result is at ${this.TLMap[propertyRegister]}`)
-                break;
-            }
             case 'Identifier': {
                 if (computed) {
                     propertyRegister = this.getVariable(property.name);
@@ -72,6 +69,7 @@ function resolveMemberExpression(node) {
                 }
                 break
             }
+            // same as above, no need to clean up as they will be cleaned up by root caller and automatically merged
             case 'Literal': {
                 const value = new BytecodeValue(property.value, this.getAvailableTempLoad());
                 this.chunk.append(value.getLoadOpcode());
@@ -79,11 +77,16 @@ function resolveMemberExpression(node) {
                 log(`Loaded property: ${property.value} at register ${propertyRegister}`)
                 break;
             }
+            case 'MemberExpression': {
+                propertyRegister = this.resolveMemberExpression(property);
+                break;
+            }
             case 'BinaryExpression': {
                 propertyRegister = this.resolveBinaryExpression(property);
                 break;
             }
             case 'CallExpression': {
+                propertyRegister = this.resolveCallExpression(property);
                 break
             }
         }
@@ -95,17 +98,17 @@ function resolveMemberExpression(node) {
     const propertyTL = this.TLMap[propertyRegister]
     const mergedTL = this.TLMap[mergeTo]
 
-    log(`Prop result stored in ${mergedTL}`)
-
     if (objectTL && objectTL !== mergedTL) {
         this.freeTempLoad(objectRegister)
-        log(`Freed ${objectTL}`)
+        log(`MemberExpression resolver: freed ${objectTL}`)
     }
 
     if (propertyTL && propertyTL !== mergedTL) {
         this.freeTempLoad(propertyRegister)
-        log(`Freed ${propertyTL}`)
+        log(`MemberExpression resolver: freed ${propertyTL}`)
     }
+
+    log(`Merged MemberExpression result stored in ${mergedTL}`)
 
     return mergeTo
 }

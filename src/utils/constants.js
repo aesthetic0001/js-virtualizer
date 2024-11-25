@@ -152,10 +152,13 @@ function operatorToOpcode(operator) {
     }
 }
 
+// types which are not automatically dropped by the transpiler
+// ie. all types that are not identifiers (variables) which still take up a register
 const cleanupNecessary = new Set([
     "BinaryExpression",
     "CallExpression",
-    "MemberExpression"
+    "MemberExpression",
+    "Literal"
 ])
 
 function needsCleanup(node) {

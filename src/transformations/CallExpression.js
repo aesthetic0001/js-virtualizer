@@ -15,7 +15,7 @@ function resolveCallExpression(node) {
 
     if (callee.type === 'CallExpression' && isNestedCallExpression(callee)) {
         calleeRegister = this.resolveCallExpression(callee);
-        log(`Merged callee result is at ${this.TLMap[calleeRegister]}`)
+        log(`Callee result is at ${this.TLMap[calleeRegister]}`)
     }
 
     argumentRegisters = arguments.map(arg => {
@@ -28,11 +28,6 @@ function resolveCallExpression(node) {
 
     if (!calleeRegister) {
         switch (callee.type) {
-            case 'CallExpression': {
-                calleeRegister = this.resolveCallExpression(callee);
-                log(`Merged callee result is at ${this.TLMap[calleeRegister]}`)
-                break;
-            }
             case 'Identifier': {
                 calleeRegister = this.getVariable(callee.name);
                 log(`Loaded callee: ${callee.name} at register ${calleeRegister}`)
@@ -45,12 +40,16 @@ function resolveCallExpression(node) {
                 log(`Loaded callee: ${callee.value} at register ${calleeRegister}`)
                 break;
             }
+            case 'MemberExpression': {
+                calleeRegister = this.resolveMemberExpression(callee);
+                break;
+            }
             case 'BinaryExpression': {
                 calleeRegister = this.resolveBinaryExpression(callee);
                 break;
             }
-            case 'MemberExpression': {
-                calleeRegister = this.resolveMemberExpression(callee);
+            case 'CallExpression': {
+                calleeRegister = this.resolveCallExpression(callee);
                 break;
             }
         }
@@ -63,7 +62,8 @@ function resolveCallExpression(node) {
     this.chunk.append(new Opcode('LOAD_DWORD', counterRegister, encodeDWORD(0)));
     this.chunk.append(new Opcode('LOAD_DWORD', oneRegister, encodeDWORD(1)));
     this.chunk.append(new Opcode('SETUP_ARRAY', argsRegister, argumentRegisters.length));
-    log(`Allocated array for arguments at ${this.TLMap[argsRegister]} (${argsRegister})`)
+
+    log(`Allocated array for arguments at ${this.TLMap[argsRegister]} (${argsRegister}) with size ${argumentRegisters.length}`)
 
     argumentRegisters.forEach((arg, index) => {
         let valueRegister
@@ -71,10 +71,6 @@ function resolveCallExpression(node) {
             valueRegister = arg
         } else {
             switch (arg.type) {
-                case 'CallExpression': {
-                    valueRegister = this.resolveCallExpression(arg);
-                    break
-                }
                 case 'Identifier': {
                     valueRegister = this.getVariable(arg.name);
                     break
@@ -86,12 +82,16 @@ function resolveCallExpression(node) {
                     valueRegister = value.register
                     break
                 }
+                case 'MemberExpression': {
+                    valueRegister = this.resolveMemberExpression(arg);
+                    break
+                }
                 case 'BinaryExpression': {
                     valueRegister = this.resolveBinaryExpression(arg);
                     break
                 }
-                case 'MemberExpression': {
-                    valueRegister = this.resolveMemberExpression(arg);
+                case 'CallExpression': {
+                    valueRegister = this.resolveCallExpression(arg);
                     break
                 }
             }
@@ -99,14 +99,18 @@ function resolveCallExpression(node) {
         log(`Loaded argument ${index} (${arguments[index].type}) at register ${valueRegister}`)
         this.chunk.append(new Opcode('SET_INDEX', argsRegister, counterRegister, valueRegister));
         if (typeof arg === 'number' || needsCleanup(arg)) this.freeTempLoad(valueRegister)
+
         this.chunk.append(new Opcode('ADD', counterRegister, counterRegister, oneRegister));
     })
+
     const mergeTo = argsRegister
     this.chunk.append(new Opcode('FUNC_ARRAY_CALL', calleeRegister, mergeTo, registers.VOID, argsRegister));
     if (needsCleanup(callee)) this.freeTempLoad(calleeRegister)
     this.freeTempLoad(counterRegister)
     this.freeTempLoad(oneRegister)
-    log(`Merged call result is at ${this.TLMap[mergeTo]} (${mergeTo})`)
+
+    log(`CallExpression return value is at ${this.TLMap[mergeTo]} (${mergeTo})`)
+
     return mergeTo
 }
 

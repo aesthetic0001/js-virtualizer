@@ -6,7 +6,7 @@ const resolveBinaryExpression = require("../transformations/BinaryExpression");
 const resolveMemberExpression = require("../transformations/MemberExpression");
 const resolveCallExpression = require("../transformations/CallExpression");
 
-const TL_COUNT = 12
+const TL_COUNT = 14
 
 class FunctionBytecodeGenerator {
     constructor(ast, chunk) {
@@ -17,7 +17,7 @@ class FunctionBytecodeGenerator {
 
         // for arithmetics and loading values
         // binary expressions and member expressions need 4 TL each
-        // call expressions need 2 TL each
+        // call expressions need 6 (too lazy to calculate actual value, this is just a guess)
         this.available = {}
         this.TLMap = {}
         for (let i = 1; i <= TL_COUNT; i++) {

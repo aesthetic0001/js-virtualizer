@@ -7,12 +7,12 @@ const object = {
 };
 function evaluate() {
     const VM = new JSVM();
-    VM.loadFromString('789c7dcfb10ac2400c06e024a7a8834bb91b5c8ecc3ae952109c9c5c7d832a5528470b5ac1d790ee79837b80bed78d0e72a2051dba6408f9bf244a0040b9eaace521e80100b08d6544a80a0098eeca3abf9499e36de69c215f58efdb891092eacb3600305ef28257bc61d4b18d0100c86a1d6cd36843bef9a506c7cc392d873f8b305aea3bffb68686bceed249da7f4bdc3bdbe7d79babb93a717eff7c14f7add986901af2a1e3305a682595e429f3177aea455f', 'hex');
+    VM.loadFromString('789c63ce62606060cec94f17c9da91c5b89181818181b11f44b0173232cf676060e0f5cc2b492dca4bcc51704eccc9112ddc385f6ee3c67eceac42c64266427a390c15b4158c146c1518c341c28cda0c0c0c4c72e1e1da72f3e787631ac5929c98932392258166161323c82c66987a308f1545b7d007c26e910c4a2d2ecd2951c84f5348ad80fa08649f9582dcfcf91f508c630499c52897f5214b28364b0b00b8ea4994', 'hex');
     VM.loadDependencies({
-        98: object,
-        145: console
+        24: object,
+        184: console
     });
     VM.run();
-    return VM.registers[252];
+    return VM.registers[93];
 }
 console.log(evaluate());
