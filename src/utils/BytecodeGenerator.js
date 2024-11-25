@@ -7,6 +7,7 @@ const resolveMemberExpression = require("../transformations/MemberExpression");
 const resolveCallExpression = require("../transformations/CallExpression");
 const resolveObjectExpression = require("../transformations/ObjectExpression");
 const resolveArrayExpression = require("../transformations/ArrayExpression");
+const resolveExpression = require("../transformations/resolveToRegister");
 
 const TL_COUNT = 14
 
@@ -38,6 +39,7 @@ class FunctionBytecodeGenerator {
         // where the last element is the most recent register (active reference)
         this.activeVariables = {}
 
+        this.resolveExpression = resolveExpression.bind(this)
         this.resolveBinaryExpression = resolveBinaryExpression.bind(this)
         this.resolveMemberExpression = resolveMemberExpression.bind(this)
         this.resolveCallExpression = resolveCallExpression.bind(this)
