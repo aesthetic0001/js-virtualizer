@@ -13,26 +13,21 @@ function resolveBinaryExpression(node) {
     let finalL, finalR
     let leftIsImmutable = false, rightIsImmutable = false
 
-    log(`Evaluating binary expression: ${left.type} ${operator} ${right.type}`)
+    log(`Evaluating BinaryExpression: ${left.type} ${operator} ${right.type}`)
 
     // dfs down before evaluating
     if (left.type === 'BinaryExpression' && isNestedBinaryExpression(left)) {
         finalL = this.resolveBinaryExpression(left);
-        log(`Merged result left is at ${this.TLMap[finalL]}`)
+        log(`Result left is at ${this.TLMap[finalL]}`)
     }
 
     if (right.type === 'BinaryExpression' && isNestedBinaryExpression(right)) {
         finalR = this.resolveBinaryExpression(right);
-        log(`Merged result right is at ${this.TLMap[finalR]}`)
+        log(`Result right is at ${this.TLMap[finalR]}`)
     }
 
     if (!finalL) {
         switch (left.type) {
-            case 'BinaryExpression': {
-                finalL = this.resolveBinaryExpression(left);
-                log(`Merged result left is at ${this.TLMap[finalL]}`)
-                break;
-            }
             case 'Literal': {
                 const reg = this.getAvailableTempLoad()
                 finalL = reg
@@ -51,16 +46,19 @@ function resolveBinaryExpression(node) {
                 finalL = this.resolveMemberExpression(left)
                 break
             }
+            case 'BinaryExpression': {
+                finalL = this.resolveBinaryExpression(left);
+                break;
+            }
+            case 'CallExpression': {
+                finalL = this.resolveCallExpression(left)
+                break
+            }
         }
     }
 
     if (!finalR) {
         switch (right.type) {
-            case 'BinaryExpression': {
-                finalR = this.resolveBinaryExpression(right);
-                log(`Merged result right is at ${this.TLMap[finalR]}`)
-                break;
-            }
             case 'Literal': {
                 const reg = this.getAvailableTempLoad()
                 finalR = reg
@@ -79,6 +77,14 @@ function resolveBinaryExpression(node) {
                 finalR = this.resolveMemberExpression(right)
                 break
             }
+            case 'BinaryExpression': {
+                finalR = this.resolveBinaryExpression(right);
+                break;
+            }
+            case 'CallExpression': {
+                finalR = this.resolveCallExpression(right)
+                break
+            }
         }
     }
 
@@ -88,16 +94,19 @@ function resolveBinaryExpression(node) {
     const leftTL = this.TLMap[finalL]
     const rightTL = this.TLMap[finalR]
     const mergedTL = this.TLMap[mergeTo]
-    log(`Merge result stored in ${mergedTL}`)
+
     if (leftTL && leftTL !== mergedTL) {
         this.freeTempLoad(finalL)
-        log(`Freed ${leftTL}`)
+        log(`BinaryExpression resolver: ${leftTL}`)
     }
+
     if (rightTL && rightTL !== mergedTL) {
         this.freeTempLoad(finalR)
-        log(`Freed ${rightTL}`)
+        log(`BinaryExpression resolver: ${rightTL}`)
     }
-    log(`Evaluated binary expression: ${left.type} ${operator} ${right.type} to ${this.TLMap[mergeTo]}`)
+
+    log(`Evaluated BinaryExpression: ${left.type} ${operator} ${right.type} to ${mergedTL}`)
+
     return mergeTo
 }
 

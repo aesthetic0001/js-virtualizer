@@ -3,16 +3,21 @@ const object = {
     call: function (a, b) {
         console.log('External Call');
         return a + b;
+    },
+    write: function (value) {
+        console.log('External Write');
+        console.log(value);
+        return value + 5;
     }
 };
 function evaluate() {
     const VM = new JSVM();
-    VM.loadFromString('789c63ce62606060cec94f17c9da91c5b89181818181b11f44b0173232cf676060e0f5cc2b492dca4bcc51704eccc9112ddc385f6ee3c67eceac42c64266427a390c15b4158c146c1518c341c28cda0c0c0c4c72e1e1da72f3e787631ac5929c98932392258166161323c82c66987a308f1545b7d007c26e910c4a2d2ecd2951c84f5348ad80fa08649f9582dcfcf91f508c630499c52897f5214b28364b0b00b8ea4994', 'hex');
+    VM.loadFromString('eJyFkLFOAzEMhu0LBW5gqe4GlijqCBOMSCxhMQsDi+cTpBVS1ErpIXidm8Lap2Gt4hdBSelQTqhLoj+OP/+/FQGA8qtFQ9+EDACANh9nEZUAwMXjsndh2Xnz0HnfRhbNbGuKGNWx3vMbc21uzb3BlJ8xAEClUwpaJI1RJy+d9w1t/rAqzCy1/1/U5KB7Ohz3cvns1u++N6u5cZ+/ifK8O6NFhrGZyUd4693YzY62syobKZkAZ6WYKtzmYpvCVocwK+p0r2pJmFOnfxZoC0kKiSuVV9Y8uXXvXg8dt2yTtlZatjHfNTEyZhRqGmj6RVc/LzZ34A==', 'base64');
     VM.loadDependencies({
-        24: object,
-        184: console
+        177: object,
+        215: console
     });
     VM.run();
-    return VM.registers[93];
+    return VM.registers[168];
 }
 console.log(evaluate());
