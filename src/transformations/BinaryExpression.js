@@ -27,65 +27,15 @@ function resolveBinaryExpression(node) {
     }
 
     if (!finalL) {
-        switch (left.type) {
-            case 'Literal': {
-                const reg = this.getAvailableTempLoad()
-                finalL = reg
-                const valueLeft = new BytecodeValue(left.value, reg);
-                this.chunk.append(valueLeft.getLoadOpcode());
-                log(`Loaded literal left: ${left.value} into ${this.TLMap[reg]}`)
-                break;
-            }
-            case 'Identifier': {
-                finalL = this.getVariable(left.name);
-                leftIsImmutable = true
-                log(`Loaded variable left: ${left.name} at register ${finalL}`)
-                break;
-            }
-            case 'MemberExpression': {
-                finalL = this.resolveMemberExpression(left)
-                break
-            }
-            case 'BinaryExpression': {
-                finalL = this.resolveBinaryExpression(left);
-                break;
-            }
-            case 'CallExpression': {
-                finalL = this.resolveCallExpression(left)
-                break
-            }
-        }
+        const {outputRegister, borrowed} = this.resolveExpression(left);
+        finalL = outputRegister
+        leftIsImmutable = borrowed
     }
 
     if (!finalR) {
-        switch (right.type) {
-            case 'Literal': {
-                const reg = this.getAvailableTempLoad()
-                finalR = reg
-                const valueRight = new BytecodeValue(right.value, reg);
-                this.chunk.append(valueRight.getLoadOpcode());
-                log(`Loaded literal right: ${right.value} into ${this.TLMap[reg]}`)
-                break;
-            }
-            case 'Identifier': {
-                finalR = this.getVariable(right.name);
-                rightIsImmutable = true
-                log(`Loaded variable right: ${right.name} at register ${finalR}`)
-                break
-            }
-            case 'MemberExpression': {
-                finalR = this.resolveMemberExpression(right)
-                break
-            }
-            case 'BinaryExpression': {
-                finalR = this.resolveBinaryExpression(right);
-                break;
-            }
-            case 'CallExpression': {
-                finalR = this.resolveCallExpression(right)
-                break
-            }
-        }
+        const {outputRegister, borrowed} = this.resolveExpression(right);
+        finalR = outputRegister
+        rightIsImmutable = borrowed
     }
 
     // always merge to the left
