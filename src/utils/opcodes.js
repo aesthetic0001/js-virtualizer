@@ -139,7 +139,7 @@ const implOpcode = {
     },
     GET_PROP: function () {
         const dest = this.readByte(), object = this.readByte(), prop = this.readByte();
-        log(`Getting property ${this.read(prop)} from object`)
+        log(`Moving property ${this.read(prop)} from object tp ${dest}`)
         this.write(dest, this.read(object)[this.read(prop)]);
     },
     SET_INDEX: function () {

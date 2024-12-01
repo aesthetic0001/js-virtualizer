@@ -85,7 +85,7 @@ function virtualizeFunctions(code) {
             }
         })
         if (dependentTemploads.length > 0) {
-            log(new LogData(`Warning: Non-freed temploads detected: ${dependentTemploads.join(", ")}`, 'warn', false));
+            log(new LogData(`Warning: Non-freed tempload(s) detected: ${dependentTemploads.join(", ")}`, 'warn', false));
         }
         log(new LogData(`Successfully Virtualized Function "${node.id.name}"`, 'success', false));
         log(`Dependencies: ${JSON.stringify(dependencies)}`);

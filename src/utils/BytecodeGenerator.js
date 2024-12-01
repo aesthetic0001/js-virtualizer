@@ -91,6 +91,14 @@ class FunctionBytecodeGenerator {
 
     // remember to free the tempload after using it
     freeTempLoad(register) {
+        if (this.available[this.TLMap[register]]) {
+            log(new LogData(`Attempted to free already available temp load register ${this.TLMap[register]}`, 'warn', false))
+            return
+        }
+        if (!this.TLMap[register]) {
+            log(new LogData(`Attempted to free non-tempload register ${register}! Skipping`, 'warn', false))
+            return
+        }
         this.available[this.TLMap[register]] = true
     }
 

@@ -4,24 +4,24 @@ const {registers} = require("../utils/constants");
 
 function resolveExpression(expression, options) {
     let outputRegister, borrowed = false
-
     options = options ?? {}
     options.computed = options.computed ?? true
-    options.thisRegister = options.thisRegister ?? registers.VOID
+    options.forceObjectImmutability = options.forceObjectImmutability ?? false
 
-    const {computed, thisRegister} = options
+    const metadata = {}
+    const {computed} = options
 
     switch (expression.type) {
         case 'Identifier': {
             if (computed) {
                 outputRegister = this.getVariable(expression.name);
-                log(`Loaded property: ${expression.name} at register ${outputRegister}`)
+                log(`Loaded identifier: ${expression.name} at register ${outputRegister}`)
                 borrowed = true
             } else {
                 const literalValue = new BytecodeValue(expression.name, this.getAvailableTempLoad());
                 outputRegister = literalValue.register
                 this.chunk.append(literalValue.getLoadOpcode());
-                log(new LogData(`Treating non-computed identifier as literal! Loading ${expression.name} at register ${outputRegister}`, 'warn', false))
+                log(new LogData(`Treating non-computed identifier as literal! Loading "${expression.name}" at register ${outputRegister}`, 'warn', false))
             }
             break
         }
@@ -34,7 +34,9 @@ function resolveExpression(expression, options) {
             break
         }
         case 'MemberExpression': {
-            outputRegister = this.resolveMemberExpression(expression);
+            const resolved = this.resolveMemberExpression(expression, options.forceObjectImmutability);
+            outputRegister = resolved.outputRegister
+            metadata.objectRegister = resolved.objectRegister
             log(`MemberExpression result is at ${this.TLMap[outputRegister]}`)
             break;
         }
@@ -44,7 +46,7 @@ function resolveExpression(expression, options) {
             break;
         }
         case 'CallExpression': {
-            outputRegister = this.resolveCallExpression(expression, thisRegister);
+            outputRegister = this.resolveCallExpression(expression);
             log(`CallExpression result is at ${this.TLMap[outputRegister]}`)
             break
         }
@@ -62,7 +64,8 @@ function resolveExpression(expression, options) {
 
     return {
         outputRegister,
-        borrowed
+        borrowed,
+        metadata
     }
 }
 
