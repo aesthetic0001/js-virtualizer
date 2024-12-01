@@ -24,6 +24,7 @@ function resolveMemberExpression(node) {
     }
 
     if (!objectRegister) {
+        // must be computed, so we can't treat it as a literal
         const {outputRegister, borrowed} = this.resolveExpression(object);
         objectRegister = outputRegister
         objectIsImmutable = borrowed

@@ -29,7 +29,7 @@ function resolveCallExpression(node, thisRegister) {
     })
 
     const mergeTo = argsRegister
-    this.chunk.append(new Opcode('FUNC_ARRAY_CALL', calleeRegister, mergeTo, registers.VOID, argsRegister));
+    this.chunk.append(new Opcode('FUNC_ARRAY_CALL', calleeRegister, mergeTo, thisRegister, argsRegister));
     if (needsCleanup(callee)) this.freeTempLoad(calleeRegister)
     this.freeTempLoad(counterRegister)
     this.freeTempLoad(oneRegister)

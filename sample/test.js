@@ -2,7 +2,7 @@ const JSVM = require("../src/vm");
 
 // @virtualize
 function random() {
-    return Math.random().toString(36).substring(2, 7)
+    return Math.random()
 }
 
 console.log(random())

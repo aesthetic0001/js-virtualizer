@@ -6,7 +6,7 @@ function resolveExpression(expression, options) {
     let outputRegister, borrowed = false
 
     options = options ?? {}
-    options.computed = options.computed ?? false
+    options.computed = options.computed ?? true
     options.thisRegister = options.thisRegister ?? registers.VOID
 
     const {computed, thisRegister} = options
@@ -18,10 +18,10 @@ function resolveExpression(expression, options) {
                 log(`Loaded property: ${expression.name} at register ${outputRegister}`)
                 borrowed = true
             } else {
-                log(new LogData('Treating non-computed identifier as literal', 'warn', false))
                 const literalValue = new BytecodeValue(expression.name, this.getAvailableTempLoad());
                 outputRegister = literalValue.register
                 this.chunk.append(literalValue.getLoadOpcode());
+                log(new LogData(`Treating non-computed identifier as literal! Loading ${expression.name} at register ${outputRegister}`, 'warn', false))
             }
             break
         }
