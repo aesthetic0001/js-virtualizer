@@ -229,6 +229,10 @@ const implOpcode = {
         const dest = this.readByte(), left = this.readByte(), right = this.readByte();
         this.write(dest, this.read(left) & this.read(right));
     },
+    BNOT: function () {
+        const dest = this.readByte(), src = this.readByte();
+        this.write(dest, ~this.read(src));
+    },
     OR: function () {
         const dest = this.readByte(), left = this.readByte(), right = this.readByte();
         this.write(dest, this.read(left) | this.read(right));

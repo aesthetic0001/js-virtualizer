@@ -118,6 +118,8 @@ const opNames = [
     // bitwise
     // [dest, left, right]
     "AND",
+    // [dest, src]
+    "BNOT",
     // [dest, left, right]
     "OR",
     // [dest, left, right]
@@ -205,6 +207,9 @@ function operatorToOpcode(operator) {
         }
         case '&' : {
             return 'AND';
+        }
+        case '~': {
+            return 'BNOT';
         }
         case '|': {
             return 'OR';
