@@ -14,9 +14,9 @@ class Example {
 }
 function evaluate() {
     const VM = new JSVM();
-    VM.loadFromString('789c63ef63606060625463606060603c0522183f8248b13eb58ff26a6aa7c03c26188fa3ef419f70491f3348134b72624e8e685f491f3b4233034433579f5a899af03d356d00981e14c6', 'hex');
-    VM.loadDependencies({ 224: Example });
+    VM.loadFromString('789c635fc7c0c0c0c4b89a81818181310a4430768348b175abbb9557af8e02f398603c8e75e1eb84bfac63066962494eccc9115df7651d3b4233034433d7bad55f560bdf5fad0f0011a51903', 'hex');
+    VM.loadDependencies({ 87: Example });
     VM.run();
-    return VM.registers[222];
+    return VM.registers[223];
 }
 console.log(evaluate());

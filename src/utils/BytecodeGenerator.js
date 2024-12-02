@@ -106,67 +106,71 @@ class FunctionBytecodeGenerator {
         this.available[this.TLMap[register]] = true
     }
 
+    handleNode(node) {
+        switch (node.type) {
+            case 'BlockStatement': {
+                this.generate(node.body);
+                break;
+            }
+            case 'IfStatement': {
+                this.resolveIfStatement(node)
+                break;
+            }
+            case 'VariableDeclaration': {
+                for (const declaration of node.declarations) {
+                    this.declareVariable(declaration.id.name, this.randomRegister());
+                    if (declaration.init) {
+                        const out = this.resolveExpression(declaration.init).outputRegister
+                        this.chunk.append(new Opcode('SET_REF', this.getVariable(declaration.id.name), out));
+                        if (needsCleanup(declaration.init)) this.freeTempLoad(out)
+                    }
+                }
+                break;
+            }
+            case 'ExpressionStatement': {
+                switch (node.expression.type) {
+                    case 'AssignmentExpression': {
+                        const {left, right, operator} = node.expression;
+                        const leftRegister = this.getVariable(left.name);
+                        const rightRegister = this.resolveExpression(right).outputRegister
+
+                        switch (operator) {
+                            case '=': {
+                                log(`Evaluating regular assignment expression with SET_REF`)
+                                this.chunk.append(new Opcode('SET_REF', leftRegister, rightRegister));
+                                break;
+                            }
+                            default: {
+                                const opcode = operatorToOpcode(operator.slice(0, -1));
+                                log(`Evaluating inclusive assignment expression with ${operator} using ${opcode}`)
+                                this.chunk.append(new Opcode(opcode, leftRegister, leftRegister, rightRegister));
+                            }
+                        }
+                        break;
+                    }
+                    case 'CallExpression': {
+                        const out = this.resolveCallExpression(node.expression)
+                        this.freeTempLoad(out)
+                        break;
+                    }
+                }
+                break
+            }
+            case 'ReturnStatement': {
+                const out = this.resolveExpression(node.argument).outputRegister
+                this.chunk.append(new Opcode('SET_REF', this.outputRegister, out));
+                if (needsCleanup(node.argument)) this.freeTempLoad(out)
+            }
+        }
+    }
+
     // generate bytecode for all converted values
     generate(block) {
         block = block || this.ast
         this.activeScopes.push([])
         // perform a DFS on the block
         for (const node of block) {
-            switch (node.type) {
-                case 'BlockStatement': {
-                    this.generate(node.body);
-                    break;
-                }
-                case 'IfStatement': {
-                    this.resolveIfStatement(node)
-                    break;
-                }
-                case 'VariableDeclaration': {
-                    for (const declaration of node.declarations) {
-                        this.declareVariable(declaration.id.name, this.randomRegister());
-                        if (declaration.init) {
-                            const out = this.resolveExpression(declaration.init).outputRegister
-                            this.chunk.append(new Opcode('SET_REF', this.getVariable(declaration.id.name), out));
-                            if (needsCleanup(declaration.init)) this.freeTempLoad(out)
-                        }
-                    }
-                    break;
-                }
-                case 'ExpressionStatement': {
-                    switch (node.expression.type) {
-                        case 'AssignmentExpression': {
-                            const {left, right, operator} = node.expression;
-                            const leftRegister = this.getVariable(left.name);
-                            const rightRegister = this.resolveExpression(right).outputRegister
-
-                            switch (operator) {
-                                case '=': {
-                                    log(`Evaluating regular assignment expression with SET_REF`)
-                                    this.chunk.append(new Opcode('SET_REF', leftRegister, rightRegister));
-                                    break;
-                                }
-                                default: {
-                                    const opcode = operatorToOpcode(operator.slice(0, -1));
-                                    log(`Evaluating inclusive assignment expression with ${operator} using ${opcode}`)
-                                    this.chunk.append(new Opcode(opcode, leftRegister, leftRegister, rightRegister));
-                                }
-                            }
-                            break;
-                        }
-                        case 'CallExpression': {
-                            const out = this.resolveCallExpression(node.expression)
-                            this.freeTempLoad(out)
-                            break;
-                        }
-                    }
-                    break
-                }
-                case 'ReturnStatement': {
-                    const out = this.resolveExpression(node.argument).outputRegister
-                    this.chunk.append(new Opcode('SET_REF', this.outputRegister, out));
-                    if (needsCleanup(node.argument)) this.freeTempLoad(out)
-                }
-            }
+            this.handleNode(node)
         }
         // discard all variables in the current scope
         for (const variableName of this.activeScopes.pop()) {

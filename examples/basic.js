@@ -1,7 +1,7 @@
 const path = require("node:path");
 const {virtualizeFunctions} = require("../src/transpile");
 const fs = require("node:fs");
-const targetFile = "branching.js";
+const targetFile = "sum.js";
 const samplePath = path.join(__dirname, "../sample/");
 const sampleCode = fs.readFileSync(path.join(samplePath, targetFile), "utf-8");
 const final = virtualizeFunctions(sampleCode);

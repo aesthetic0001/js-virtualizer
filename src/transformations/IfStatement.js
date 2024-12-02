@@ -38,21 +38,7 @@ function resolveIfStatement(node) {
     if (testImmutable) this.freeTempLoad(testRegister)
     if (needsCleanup(test)) this.freeTempLoad(testRegister)
 
-    switch (consequent.type) {
-        case 'BlockStatement': {
-            this.generate(consequent.body)
-            break
-        }
-        case 'IfStatement': {
-            this.resolveIfStatement(consequent)
-            break
-        }
-        case 'ExpressionStatement': {
-            const res = this.resolveExpression(consequent.expression)
-            if (needsCleanup(consequent.expression)) this.freeTempLoad(res.outputRegister)
-            break
-        }
-    }
+    this.handleNode(consequent)
 
     if (alternate) {
         const endJumpIP = this.chunk.getCurrentIP()
@@ -61,21 +47,7 @@ function resolveIfStatement(node) {
         const alternateJumpDistance = this.chunk.getCurrentIP() - jumpIP
         alternateJumpOpcode.modifyArgs(testResult, encodeDWORD(alternateJumpDistance))
         log(new LogData(`Detected alternate clause, setting alternate jump to: ${alternateJumpDistance}`, 'accent', true))
-        switch (alternate.type) {
-            case 'BlockStatement': {
-                this.generate(alternate.body)
-                break
-            }
-            case 'IfStatement': {
-                this.resolveIfStatement(alternate)
-                break
-            }
-            case 'ExpressionStatement': {
-                const res = this.resolveExpression(alternate.expression)
-                if (needsCleanup(alternate.expression)) this.freeTempLoad(res.outputRegister)
-                break
-            }
-        }
+        this.handleNode(alternate)
         const endJumpDistance = this.chunk.getCurrentIP() - endJumpIP
         log(new LogData(`Generated alternate clause, jumping to end: ${endJumpDistance}`, 'accent', true))
         endJumpOpcode.modifyArgs(encodeDWORD(endJumpDistance))

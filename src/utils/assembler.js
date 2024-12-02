@@ -65,7 +65,7 @@ class VMChunk {
     toString() {
         let IP = 0;
         const lines = this.code.map((opcode) => {
-            const line = `[IP: ${IP}] - ${opcode.toString()}`;
+            const line = `[IP: ${IP}] ${opcode.toString()}`;
             IP += opcode.toBytes().length;
             return line;
         });

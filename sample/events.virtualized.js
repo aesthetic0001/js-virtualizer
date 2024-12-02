@@ -1,18 +1,18 @@
-const JSVM = require("../src/vm");
+const JSVM = require('../src/vm');
 const mineflayer = require('mineflayer');
 function onLogin() {
     console.log('Logged in');
 }
 function main() {
     const VM = new JSVM();
-    VM.loadFromString('eJxtjjFug0AQRYesY4wUpbChRRSpUqTjApnGRbpI2+MN2qDATsQu3Xa5gMUN8DU4Sy6yVQRrIkt2MxrN/Pf/ZxwA1m2hPqiJecdDBAAI7DzzaUQcO2STbGPo3bSVkjFHHk6SYJZA4OZ9AICnxOZDmucu4hbtjEW6O+gzZ33ANRcmuHBocbv3iZFoy8KUr2RiflrQi25rxyZ49UnasB4AHg41iS/diBdBzc4Nvf9/U2uCHkD8/t82nS5bVTTlzg37BK1Lrc0jjifcjj6c1SRjfrwRy6bej28kZaVkVqms0Fnq3KXN0XusSIky5qM3ubsyua9JVmrhErQ/Z37E5z8avWHd', 'base64');
+    VM.loadFromString('eJxtjjFug0AQRYesY2wUpYgNNRKpkzukTpcT4A3aoMBOxK4vgLQlR3DNJdaVizlFfAAfYhXBGsuS04xGM//9/5kBgHmTy0+sY3M0IQEABHac3TAiQ0dig2yh8UM3pRSxIRMOkmCUQODGvQeA58R2fdZ1LjKW7Igt1Xajzpz1AbdcmNDEkaXV3icueVPkunhDHZvDhF51mzs2wLMvVJqdAOBhUyH/VjV/4VivXX/y/x9sdHAC4L+X22KrikbmdbF2/T4h6zJru8jQgVatD2cVitjs/ollQ+/HdxSilCItZZqrNHPu2mbnPWYoeRGb1pvc3ZjcVyhKOXEJ2acz39LrH43JgS0=', 'base64');
     VM.loadDependencies({
-        117: Math,
-        131: onLogin,
-        144: console,
-        162: mineflayer
+        18: onLogin,
+        157: console,
+        195: mineflayer,
+        222: Math
     });
     VM.run();
-    return VM.registers[106];
+    return VM.registers[93];
 }
 main();
