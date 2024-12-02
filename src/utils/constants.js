@@ -90,6 +90,10 @@ const opNames = [
     "GREATER_THAN",
     // [dest, left, right]
     "GREATER_THAN_EQ",
+    // [dest, src]
+    "TEST",
+    // [dest, src]
+    "TEST_NEQ",
 
     // arithmetic
     // [dest, left, right]

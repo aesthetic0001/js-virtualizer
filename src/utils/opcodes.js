@@ -178,6 +178,14 @@ const implOpcode = {
         const dest = this.readByte(), left = this.readByte(), right = this.readByte();
         this.write(dest, this.read(left) >= this.read(right));
     },
+    TEST: function () {
+        const dest = this.readByte(), src = this.readByte();
+        this.write(dest, !!this.read(src));
+    },
+    TEST_NEQ: function () {
+        const dest = this.readByte(), src = this.readByte();
+        this.write(dest, !this.read(src));
+    },
     ADD: function () {
         const dest = this.readByte(), left = this.readByte(), right = this.readByte();
         this.write(dest, this.read(left) + this.read(right));
