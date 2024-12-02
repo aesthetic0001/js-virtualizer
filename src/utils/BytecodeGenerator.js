@@ -7,6 +7,7 @@ const resolveMemberExpression = require("../transformations/MemberExpression");
 const resolveCallExpression = require("../transformations/CallExpression");
 const resolveObjectExpression = require("../transformations/ObjectExpression");
 const resolveArrayExpression = require("../transformations/ArrayExpression");
+const resolveNewExpression = require("../transformations/NewExpression");
 const resolveExpression = require("../transformations/resolveToRegister");
 
 const TL_COUNT = 14
@@ -45,6 +46,7 @@ class FunctionBytecodeGenerator {
         this.resolveCallExpression = resolveCallExpression.bind(this)
         this.resolveObjectExpression = resolveObjectExpression.bind(this)
         this.resolveArrayExpression = resolveArrayExpression.bind(this)
+        this.resolveNewExpression = resolveNewExpression.bind(this)
     }
 
     declareVariable(variableName, register) {

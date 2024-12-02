@@ -17,6 +17,7 @@ virtualize.js is a proof-of-concept project which brings virtualization-based ob
 ## Todo
 
 - [x] transpiler
+- [x] provide a proper `this` property to functions
 - [ ] callbacks
 - [ ] add support for async functions in the context of the whole program
-- [ ] add support for classes and provide a proper `this` property to functions
+- [ ] allow for declaration of classes (i don't know why you would want to init a class in a function but this is still a limitation of the current implementation)

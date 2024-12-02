@@ -60,6 +60,11 @@ function resolveExpression(expression, options) {
             log(`ArrayExpression result is at ${this.TLMap[outputRegister]}`)
             break
         }
+        case 'NewExpression': {
+            outputRegister = this.resolveNewExpression(expression);
+            log(`NewExpression result is at ${this.TLMap[outputRegister]}`)
+            break
+        }
     }
 
     return {

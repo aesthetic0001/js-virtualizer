@@ -38,6 +38,10 @@ const implOpcode = {
         const register = this.readByte(), size = this.readDWORD();
         this.write(register, Array(size));
     },
+    INIT_CONSTRUCTOR: function () {
+        const register = this.readByte(), constructor = this.readByte(), args = this.readByte()
+        this.write(register, new (this.read(constructor))(...this.read(args)));
+    },
     FUNC_CALL: function () {
         const fn = this.readByte(), dst = this.readByte(),
             funcThis = this.readByte(), args = this.readArray();

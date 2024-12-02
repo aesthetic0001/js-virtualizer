@@ -31,6 +31,8 @@ const opNames = [
     "SETUP_OBJECT",
     // [register, size] : sets up an empty array of size
     "SETUP_ARRAY",
+    // [register, constructor_register, argsReg]
+    "INIT_CONSTRUCTOR",
 
     // functions
 
@@ -160,6 +162,7 @@ const cleanupNecessary = new Set([
     "MemberExpression",
     "ObjectExpression",
     "ArrayExpression",
+    "NewExpression",
     "Literal"
 ])
 
