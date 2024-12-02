@@ -4,10 +4,10 @@ const JSVM = require("../src/vm");
 function evaluate() {
     const value = Math.random()
     console.log("Selected value:", value)
-    if (value > 0.5) {
-        return "Greater than 0.5"
+    if (1 === 2) {
+        return "Greater than 0.7"
     } else {
-        return "Less than or equal to 0.5"
+        return "Less than equal to 0.5"
     }
 }
 

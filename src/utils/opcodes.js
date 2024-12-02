@@ -101,7 +101,10 @@ const implOpcode = {
         const cur = this.read(registers.INSTRUCTION_POINTER);
         const register = this.readByte(), offset = this.readDWORD();
         if (!this.read(register)) {
+            log(`Jumping to ${cur + offset - 1}`)
             this.registers[registers.INSTRUCTION_POINTER] = cur + offset - 1;
+        } else {
+            log(`Not jumping to ${cur + offset - 1}`)
         }
     },
     TRY_CATCH_FINALLY: function () {

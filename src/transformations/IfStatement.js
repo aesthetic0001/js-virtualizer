@@ -31,8 +31,8 @@ function resolveIfStatement(node) {
     const testResult = testImmutable ? this.getAvailableTempLoad() : testRegister
     this.chunk.append(new Opcode('TEST', testResult, testRegister))
     const jumpIP = this.chunk.getCurrentIP()
-    const ifJumpOpcode = new Opcode('JUMP_NOT_EQ', testResult, 0)
-    this.chunk.append(ifJumpOpcode)
+    const alternateJumpOpcode = new Opcode('JUMP_NOT_EQ', testResult, encodeDWORD(0))
+    this.chunk.append(alternateJumpOpcode)
 
     if (testImmutable) this.freeTempLoad(testRegister)
     if (needsCleanup(test)) this.freeTempLoad(testRegister)
@@ -41,16 +41,18 @@ function resolveIfStatement(node) {
 
     if (alternate) {
         const endJumpIP = this.chunk.getCurrentIP()
-        const endJumpOpcode = new Opcode('JUMP_UNCONDITIONAL', 0)
+        const endJumpOpcode = new Opcode('JUMP_UNCONDITIONAL', encodeDWORD(0))
         this.chunk.append(endJumpOpcode)
-        log(new LogData(`Jumping to beginning of alternate: ${this.chunk.getCurrentIP() - jumpIP}`, 'accent', true))
-        ifJumpOpcode.modifyArgs(testResult, encodeDWORD(this.chunk.getCurrentIP() - jumpIP))
+        const alternateJumpDistance = this.chunk.getCurrentIP() - jumpIP
+        alternateJumpOpcode.modifyArgs(testResult, encodeDWORD(alternateJumpDistance))
+        log(new LogData(`Jumping to beginning of alternate: ${alternateJumpDistance} bytes`, 'accent', true))
         this.generate(alternate.body)
-        log(new LogData(`End of if statement, jumping to end: ${this.chunk.getCurrentIP() - endJumpIP}`, 'accent', true))
-        endJumpOpcode.modifyArgs(encodeDWORD(this.chunk.getCurrentIP() - endJumpIP))
+        const endJumpDistance = this.chunk.getCurrentIP() - endJumpIP
+        log(new LogData(`End of conditional clause, jumping to end: ${endJumpDistance}`, 'accent', true))
+        endJumpOpcode.modifyArgs(encodeDWORD(endJumpDistance))
     } else {
         log(new LogData(`End of if statement without consequent, jumping to end: ${this.chunk.getCurrentIP() - jumpIP}`, 'accent', true))
-        ifJumpOpcode.modifyArgs(encodeDWORD(this.chunk.getCurrentIP() - jumpIP))
+        alternateJumpOpcode.modifyArgs(encodeDWORD(this.chunk.getCurrentIP() - jumpIP))
     }
 }
 
