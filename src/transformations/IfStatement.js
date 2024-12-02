@@ -2,6 +2,7 @@ const {log, LogData} = require("../utils/log");
 const {Opcode, BytecodeValue, encodeDWORD} = require("../utils/assembler");
 const {needsCleanup} = require("../utils/constants");
 
+// for consequent/alternate
 function resolveIfStatement(node) {
     const {test, consequent, alternate} = node;
 
@@ -37,7 +38,21 @@ function resolveIfStatement(node) {
     if (testImmutable) this.freeTempLoad(testRegister)
     if (needsCleanup(test)) this.freeTempLoad(testRegister)
 
-    this.generate(consequent.body)
+    switch (consequent.type) {
+        case 'BlockStatement': {
+            this.generate(consequent.body)
+            break
+        }
+        case 'IfStatement': {
+            this.resolveIfStatement(consequent)
+            break
+        }
+        case 'ExpressionStatement': {
+            const res = this.resolveExpression(consequent.expression)
+            if (needsCleanup(consequent.expression)) this.freeTempLoad(res.outputRegister)
+            break
+        }
+    }
 
     if (alternate) {
         const endJumpIP = this.chunk.getCurrentIP()
@@ -45,14 +60,29 @@ function resolveIfStatement(node) {
         this.chunk.append(endJumpOpcode)
         const alternateJumpDistance = this.chunk.getCurrentIP() - jumpIP
         alternateJumpOpcode.modifyArgs(testResult, encodeDWORD(alternateJumpDistance))
-        log(new LogData(`Jumping to beginning of alternate: ${alternateJumpDistance} bytes`, 'accent', true))
-        this.generate(alternate.body)
+        log(new LogData(`Detected alternate clause, setting alternate jump to: ${alternateJumpDistance}`, 'accent', true))
+        switch (alternate.type) {
+            case 'BlockStatement': {
+                this.generate(alternate.body)
+                break
+            }
+            case 'IfStatement': {
+                this.resolveIfStatement(alternate)
+                break
+            }
+            case 'ExpressionStatement': {
+                const res = this.resolveExpression(alternate.expression)
+                if (needsCleanup(alternate.expression)) this.freeTempLoad(res.outputRegister)
+                break
+            }
+        }
         const endJumpDistance = this.chunk.getCurrentIP() - endJumpIP
-        log(new LogData(`End of conditional clause, jumping to end: ${endJumpDistance}`, 'accent', true))
+        log(new LogData(`Generated alternate clause, jumping to end: ${endJumpDistance}`, 'accent', true))
         endJumpOpcode.modifyArgs(encodeDWORD(endJumpDistance))
     } else {
+        log('No alternate!')
         log(new LogData(`End of if statement without consequent, jumping to end: ${this.chunk.getCurrentIP() - jumpIP}`, 'accent', true))
-        alternateJumpOpcode.modifyArgs(encodeDWORD(this.chunk.getCurrentIP() - jumpIP))
+        alternateJumpOpcode.modifyArgs(testResult, encodeDWORD(this.chunk.getCurrentIP() - jumpIP))
     }
 }
 
