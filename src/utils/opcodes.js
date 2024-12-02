@@ -6,6 +6,10 @@ const implOpcode = {
         const register = this.readByte(), value = this.readByte();
         this.write(register, value);
     },
+    LOAD_BOOL: function () {
+        const register = this.readByte(), value = this.readBool();
+        this.write(register, value);
+    },
     LOAD_DWORD: function () {
         const register = this.readByte(), value = this.readDWORD();
         this.write(register, value);
@@ -240,6 +244,38 @@ const implOpcode = {
     SHIFT_RIGHT: function () {
         const dest = this.readByte(), src = this.readByte(), shift = this.readByte();
         this.write(dest, this.read(src) >> this.read(shift));
+    },
+    NOT: function () {
+        const dest = this.readByte(), src = this.readByte();
+        this.write(dest, !this.read(src));
+    },
+    NEGATE: function () {
+        const dest = this.readByte(), src = this.readByte();
+        this.write(dest, -this.read(src));
+    },
+    PLUS: function () {
+        const dest = this.readByte(), src = this.readByte();
+        this.write(dest, +this.read(src));
+    },
+    INCREMENT: function () {
+        const dest = this.readByte();
+        this.write(dest, this.read(dest) + 1);
+    },
+    DECREMENT: function () {
+        const dest = this.readByte();
+        this.write(dest, this.read(dest) - 1);
+    },
+    TYPEOF: function () {
+        const dest = this.readByte(), src = this.readByte();
+        this.write(dest, typeof this.read(src));
+    },
+    VOID: function () {
+        const dest = this.readByte(), src = this.readByte();
+        this.write(dest, void this.read(src));
+    },
+    DELETE: function () {
+        const dest = this.readByte(), src = this.readByte();
+        this.write(dest, delete this.read(src));
     },
     NOP: function () {
     },

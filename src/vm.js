@@ -36,6 +36,12 @@ class JSVM {
         return byte
     }
 
+    readBool() {
+        const bool = this.readByte() === 1
+        // log(`Read boolean: ${bool}`)
+        return bool
+    }
+
     readArrayRegisters() {
         const length = this.readByte()
         const array = []

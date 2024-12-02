@@ -21,7 +21,7 @@ function resolveExpression(expression, options) {
                 const literalValue = new BytecodeValue(expression.name, this.getAvailableTempLoad());
                 outputRegister = literalValue.register
                 this.chunk.append(literalValue.getLoadOpcode());
-                log(new LogData(`Treating non-computed identifier as literal! Loading "${expression.name}" at register ${outputRegister}`, 'warn', false))
+                log(new LogData(`Treating non-computed identifier as literal! Loading "${expression.name}" at register ${outputRegister}`, 'warn', true))
             }
             break
         }
@@ -63,6 +63,11 @@ function resolveExpression(expression, options) {
         case 'NewExpression': {
             outputRegister = this.resolveNewExpression(expression);
             log(`NewExpression result is at ${this.TLMap[outputRegister]}`)
+            break
+        }
+        case 'UnaryExpression': {
+            outputRegister = this.resolveUnaryExpression(expression);
+            log(`UnaryExpression result is at ${this.TLMap[outputRegister]}`)
             break
         }
     }

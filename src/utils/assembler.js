@@ -86,6 +86,9 @@ class BytecodeValue {
 
     getBytecodeType(Literal) {
         switch (typeof Literal) {
+            case 'boolean': {
+                return 'BOOL';
+            }
             case 'number': {
                 return Number.isInteger(Literal) ? 'DWORD' : 'FLOAT';
             }
@@ -100,6 +103,10 @@ class BytecodeValue {
         switch (this.type) {
             case 'BYTE': {
                 encoded = this.value;
+                break;
+            }
+            case 'BOOL': {
+                encoded = this.value ? 1 : 0;
                 break;
             }
             case 'DWORD': {

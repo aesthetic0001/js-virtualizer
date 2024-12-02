@@ -10,6 +10,7 @@ const resolveArrayExpression = require("../transformations/ArrayExpression");
 const resolveNewExpression = require("../transformations/NewExpression");
 const resolveExpression = require("../transformations/resolveToRegister");
 const resolveIfStatement = require("../transformations/IfStatement");
+const resolveUnaryExpression = require("../transformations/UnaryExpression");
 
 const TL_COUNT = 14
 
@@ -49,6 +50,7 @@ class FunctionBytecodeGenerator {
         this.resolveArrayExpression = resolveArrayExpression.bind(this)
         this.resolveNewExpression = resolveNewExpression.bind(this)
         this.resolveIfStatement = resolveIfStatement.bind(this)
+        this.resolveUnaryExpression = resolveUnaryExpression.bind(this)
     }
 
     declareVariable(variableName, register) {

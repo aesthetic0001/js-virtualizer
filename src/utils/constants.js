@@ -18,6 +18,8 @@ const opNames = [
     // [register, value]
     "LOAD_BYTE",
     // [register, value]
+    "LOAD_BOOL",
+    // [register, value]
     "LOAD_DWORD",
     // [register, value]
     "LOAD_FLOAT",
@@ -125,6 +127,24 @@ const opNames = [
     // [dest, src, shift]
     "SHIFT_RIGHT",
 
+    // other unary
+    // [dest, src]
+    "NOT",
+    // [dest, src]
+    "NEGATE",
+    // [dest, src]
+    "PLUS",
+    // [dest, src]
+    "INCREMENT",
+    // [dest, src]
+    "DECREMENT",
+    // [dest, src]
+    "TYPEOF",
+    // [dest, src]
+    "VOID",
+    // [dest, src]
+    "DELETE",
+
     // misc
     "NOP",
     // none
@@ -183,6 +203,56 @@ function operatorToOpcode(operator) {
         case '!==': {
             return 'NOT_EQ';
         }
+        case '&' : {
+            return 'AND';
+        }
+        case '|': {
+            return 'OR';
+        }
+        case '^': {
+            return 'XOR';
+        }
+        case '<<': {
+            return 'SHIFT_LEFT';
+        }
+        case '>>': {
+            return 'SHIFT_RIGHT';
+        }
+        default: {
+            throw new Error(`Unknown operator ${operator}`)
+        }
+    }
+}
+
+function unaryOperatorToOpcode(operator) {
+    switch (operator) {
+        case '!': {
+            return 'NOT';
+        }
+        case '-': {
+            return 'NEGATE';
+        }
+        case '+': {
+            return 'PLUS';
+        }
+        case '++': {
+            return 'INCREMENT';
+        }
+        case '--': {
+            return 'DECREMENT';
+        }
+        case 'typeof': {
+            return 'TYPEOF';
+        }
+        case 'void': {
+            return 'VOID';
+        }
+        case 'delete': {
+            return 'DELETE';
+        }
+        default: {
+            throw new Error(`Unknown unary operator ${operator}`)
+        }
     }
 }
 
@@ -195,6 +265,7 @@ const cleanupNecessary = new Set([
     "ObjectExpression",
     "ArrayExpression",
     "NewExpression",
+    "UnaryExpression",
     "Literal"
 ])
 
@@ -210,5 +281,6 @@ module.exports = {
     opNames,
     opcodes,
     operatorToOpcode,
+    unaryOperatorToOpcode,
     needsCleanup
 }
