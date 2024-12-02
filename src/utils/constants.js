@@ -52,9 +52,9 @@ const opNames = [
     // branching
     // [offset]
     "JUMP_UNCONDITIONAL",
-    // [register, offset]
+    // [register, [offset]]
     "JUMP_EQ",
-    // [register, offset]
+    // [register, [offset]]
     "JUMP_NOT_EQ",
     // [error_store_register, catch_offset, finally_offset]
     "TRY_CATCH_FINALLY",
@@ -79,7 +79,11 @@ const opNames = [
 
     // comparison
     // [dest, left, right]
+    "EQ_COERCE",
+    // [dest, left, right]
     "EQ",
+    // [dest, left, right]
+    "NOT_EQ_COERCE",
     // [dest, left, right]
     "NOT_EQ",
     // [dest, left, right]
@@ -154,6 +158,30 @@ function operatorToOpcode(operator) {
         }
         case '**': {
             return 'POWER';
+        }
+        case '<': {
+            return 'LESS_THAN';
+        }
+        case '<=': {
+            return 'LESS_THAN_EQ';
+        }
+        case '>': {
+            return 'GREATER_THAN';
+        }
+        case '>=': {
+            return 'GREATER_THAN_EQ';
+        }
+        case '==': {
+            return 'EQ_COERCE';
+        }
+        case '===': {
+            return 'EQ';
+        }
+        case '!=': {
+            return 'NOT_EQ_COERCE';
+        }
+        case '!==': {
+            return 'NOT_EQ';
         }
     }
 }

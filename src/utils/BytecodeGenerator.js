@@ -9,6 +9,7 @@ const resolveObjectExpression = require("../transformations/ObjectExpression");
 const resolveArrayExpression = require("../transformations/ArrayExpression");
 const resolveNewExpression = require("../transformations/NewExpression");
 const resolveExpression = require("../transformations/resolveToRegister");
+const resolveIfStatement = require("../transformations/IfStatement");
 
 const TL_COUNT = 14
 
@@ -47,6 +48,7 @@ class FunctionBytecodeGenerator {
         this.resolveObjectExpression = resolveObjectExpression.bind(this)
         this.resolveArrayExpression = resolveArrayExpression.bind(this)
         this.resolveNewExpression = resolveNewExpression.bind(this)
+        this.resolveIfStatement = resolveIfStatement.bind(this)
     }
 
     declareVariable(variableName, register) {
@@ -113,6 +115,10 @@ class FunctionBytecodeGenerator {
             switch (node.type) {
                 case 'BlockStatement': {
                     this.generate(node.body);
+                    break;
+                }
+                case 'IfStatement': {
+                    this.resolveIfStatement(node)
                     break;
                 }
                 case 'VariableDeclaration': {

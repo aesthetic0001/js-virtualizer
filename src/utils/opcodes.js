@@ -154,9 +154,17 @@ const implOpcode = {
         const dest = this.readByte(), array = this.readByte(), index = this.readByte();
         this.write(dest, this.read(array)[this.read(index)]);
     },
+    EQ_COERCE: function () {
+        const dest = this.readByte(), left = this.readByte(), right = this.readByte();
+        this.write(dest, this.read(left) == this.read(right));
+    },
     EQ: function () {
         const dest = this.readByte(), left = this.readByte(), right = this.readByte();
         this.write(dest, this.read(left) === this.read(right));
+    },
+    NOT_EQ_COERCE: function() {
+        const dest = this.readByte(), left = this.readByte(), right = this.readByte();
+        this.write(dest, this.read(left) != this.read(right));
     },
     NOT_EQ: function () {
         const dest = this.readByte(), left = this.readByte(), right = this.readByte();
