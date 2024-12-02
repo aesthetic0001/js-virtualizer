@@ -4,6 +4,11 @@ class Opcode {
     constructor(name, ...args) {
         this.name = name
         this.opcode = Buffer.from([opcodes[this.name]]);
+        this.id = null
+        this.modifyArgs(...args);
+    }
+
+    modifyArgs(...args) {
         this.data = Buffer.concat(args.map((arg) => {
             if (Buffer.isBuffer(arg)) {
                 return arg;
@@ -49,21 +54,75 @@ class VMChunk {
         return !this.hasCustomTerminator ? Buffer.concat([...this.code.map(opcode => opcode.toBytes()), Buffer.from([opcodes.END])]) : Buffer.concat(this.code.map(opcode => opcode.toBytes()));
     }
 
+    getCurrentIP() {
+        let IP = 0;
+        for (const opcode of this.code) {
+            IP += opcode.toBytes().length;
+        }
+        return IP;
+    }
+
     toString() {
         let IP = 0;
-        const lines = this.code.map(
-            (opcode) => {
-                const line = `[IP: ${IP}] - ${opcode.toString()}`;
-                IP += opcode.toBytes().length;
-                return line;
-            }
-        );
-        const info = [
-            `Chunk length: ${this.code.length}`,
-            `Already has terminator: ${this.hasCustomTerminator}`,
-            `Total bytes: ${this.toBytes().length}`
-        ]
+        const lines = this.code.map((opcode) => {
+            const line = `[IP: ${IP}] ${opcode.toString()}`;
+            IP += opcode.toBytes().length;
+            return line;
+        });
+        if (!this.hasCustomTerminator) {
+            lines.push(`[IP: ${IP}] - END`);
+        }
+        const info = [`Total Operations: ${this.code.length + (!this.hasCustomTerminator ? 1 : 0)} | Total Bytes: ${this.toBytes().length}`]
         return [...info, ...lines].join('\n');
+    }
+}
+
+class BytecodeValue {
+    constructor(value, register, type) {
+        this.type = type || this.getBytecodeType(value);
+        this.value = value;
+        this.register = register;
+    }
+
+    getBytecodeType(Literal) {
+        switch (typeof Literal) {
+            case 'boolean': {
+                return 'BOOL';
+            }
+            case 'number': {
+                return Number.isInteger(Literal) ? 'DWORD' : 'FLOAT';
+            }
+            case 'string': {
+                return 'STRING';
+            }
+        }
+    }
+
+    getLoadOpcode() {
+        let encoded
+        switch (this.type) {
+            case 'BYTE': {
+                encoded = this.value;
+                break;
+            }
+            case 'BOOL': {
+                encoded = this.value ? 1 : 0;
+                break;
+            }
+            case 'DWORD': {
+                encoded = encodeDWORD(this.value);
+                break;
+            }
+            case 'FLOAT': {
+                encoded = encodeFloat(this.value);
+                break;
+            }
+            case 'STRING': {
+                encoded = encodeString(this.value);
+                break;
+            }
+        }
+        return new Opcode(`LOAD_${this.type}`, this.register, encoded);
     }
 }
 
@@ -112,10 +171,6 @@ function encodeString(str) {
     return Buffer.concat([encodeDWORD(length), data]);
 }
 
-function encodeObject(obj) {
-    // todo: implement
-}
-
 function encodeArray(array, offset) {
     const length = array.length;
     // register, value
@@ -153,16 +208,13 @@ function encodeArray(array, offset) {
     const lengthBuffer = encodeDWORD(length);
     const data = Buffer.concat(references);
     return {
-        encoded: Buffer.concat([lengthBuffer, data]),
-        dependencies
+        encoded: Buffer.concat([lengthBuffer, data]), dependencies
     }
 }
 
 function encodeArrayRegisters(array) {
     const length = array.length;
-    const encoded = [
-        Buffer.from([length])
-    ]
+    const encoded = [Buffer.from([length])]
     for (let i = 0; i < length; i++) {
         encoded.push(Buffer.from([array[i]]))
     }
@@ -170,11 +222,5 @@ function encodeArrayRegisters(array) {
 }
 
 module.exports = {
-    Opcode,
-    VMChunk,
-    encodeString,
-    encodeFloat,
-    encodeDWORD,
-    encodeArray,
-    encodeArrayRegisters
+    Opcode, VMChunk, BytecodeValue, encodeString, encodeFloat, encodeDWORD, encodeArray, encodeArrayRegisters
 }

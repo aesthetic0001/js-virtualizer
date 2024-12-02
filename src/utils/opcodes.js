@@ -1,8 +1,13 @@
 const {registers} = require("./constants");
+const {log} = require("./log");
 
 const implOpcode = {
     LOAD_BYTE: function () {
         const register = this.readByte(), value = this.readByte();
+        this.write(register, value);
+    },
+    LOAD_BOOL: function () {
+        const register = this.readByte(), value = this.readBool();
         this.write(register, value);
     },
     LOAD_DWORD: function () {
@@ -29,10 +34,33 @@ const implOpcode = {
         }
         this.write(register, obj);
     },
+    SETUP_OBJECT: function () {
+        const register = this.readByte();
+        this.write(register, {});
+    },
+    SETUP_ARRAY: function () {
+        const register = this.readByte(), size = this.readDWORD();
+        this.write(register, Array(size));
+    },
+    INIT_CONSTRUCTOR: function () {
+        const register = this.readByte(), constructor = this.readByte(), args = this.readByte()
+        this.write(register, new (this.read(constructor))(...this.read(args)));
+    },
     FUNC_CALL: function () {
         const fn = this.readByte(), dst = this.readByte(),
             funcThis = this.readByte(), args = this.readArray();
+        log(`Calling function at register ${fn} with this at register ${funcThis} and args: ${args}`);
         const res = this.read(fn).apply(this.read(funcThis), args);
+        log(`Function call result: ${res} => ${dst}`);
+        this.write(dst, res);
+    },
+    FUNC_ARRAY_CALL: function () {
+        const fn = this.readByte(), dst = this.readByte(),
+            funcThis = this.readByte(), argsReg = this.readByte();
+        const args = this.read(argsReg);
+        log(`Calling function with arraycall convention at register ${fn} with this at register ${funcThis} and args: ${args}`);
+        const res = this.read(fn).apply(this.read(funcThis), args);
+        log(`Function call result: ${res} => ${dst}`);
         this.write(dst, res);
     },
     VFUNC_CALL: function () {
@@ -77,7 +105,10 @@ const implOpcode = {
         const cur = this.read(registers.INSTRUCTION_POINTER);
         const register = this.readByte(), offset = this.readDWORD();
         if (!this.read(register)) {
+            log(`Jumping to ${cur + offset - 1}`)
             this.registers[registers.INSTRUCTION_POINTER] = cur + offset - 1;
+        } else {
+            log(`Not jumping to ${cur + offset - 1}`)
         }
     },
     TRY_CATCH_FINALLY: function () {
@@ -117,20 +148,30 @@ const implOpcode = {
         const obj = this.read(object);
         obj[this.read(prop)] = this.read(src);
     },
-    SET_PROPS: function () {
-        const object = this.readByte(), props = this.readArray(), srcs = this.readArray();
-        const obj = this.read(object);
-        for (let i = 0; i < props.length; i++) {
-            obj[this.read(props[i])] = this.read(srcs[i]);
-        }
-    },
     GET_PROP: function () {
         const dest = this.readByte(), object = this.readByte(), prop = this.readByte();
+        log(`Moving property ${this.read(prop)} from object tp ${dest}`)
         this.write(dest, this.read(object)[this.read(prop)]);
+    },
+    SET_INDEX: function () {
+        const array = this.readByte(), index = this.readByte(), src = this.readByte();
+        this.read(array)[this.read(index)] = this.read(src);
+    },
+    GET_INDEX: function () {
+        const dest = this.readByte(), array = this.readByte(), index = this.readByte();
+        this.write(dest, this.read(array)[this.read(index)]);
+    },
+    EQ_COERCE: function () {
+        const dest = this.readByte(), left = this.readByte(), right = this.readByte();
+        this.write(dest, this.read(left) == this.read(right));
     },
     EQ: function () {
         const dest = this.readByte(), left = this.readByte(), right = this.readByte();
         this.write(dest, this.read(left) === this.read(right));
+    },
+    NOT_EQ_COERCE: function() {
+        const dest = this.readByte(), left = this.readByte(), right = this.readByte();
+        this.write(dest, this.read(left) != this.read(right));
     },
     NOT_EQ: function () {
         const dest = this.readByte(), left = this.readByte(), right = this.readByte();
@@ -151,6 +192,14 @@ const implOpcode = {
     GREATER_THAN_EQ: function () {
         const dest = this.readByte(), left = this.readByte(), right = this.readByte();
         this.write(dest, this.read(left) >= this.read(right));
+    },
+    TEST: function () {
+        const dest = this.readByte(), src = this.readByte();
+        this.write(dest, !!this.read(src));
+    },
+    TEST_NEQ: function () {
+        const dest = this.readByte(), src = this.readByte();
+        this.write(dest, !this.read(src));
     },
     ADD: function () {
         const dest = this.readByte(), left = this.readByte(), right = this.readByte();
@@ -180,6 +229,10 @@ const implOpcode = {
         const dest = this.readByte(), left = this.readByte(), right = this.readByte();
         this.write(dest, this.read(left) & this.read(right));
     },
+    BNOT: function () {
+        const dest = this.readByte(), src = this.readByte();
+        this.write(dest, ~this.read(src));
+    },
     OR: function () {
         const dest = this.readByte(), left = this.readByte(), right = this.readByte();
         this.write(dest, this.read(left) | this.read(right));
@@ -195,6 +248,38 @@ const implOpcode = {
     SHIFT_RIGHT: function () {
         const dest = this.readByte(), src = this.readByte(), shift = this.readByte();
         this.write(dest, this.read(src) >> this.read(shift));
+    },
+    NOT: function () {
+        const dest = this.readByte(), src = this.readByte();
+        this.write(dest, !this.read(src));
+    },
+    NEGATE: function () {
+        const dest = this.readByte(), src = this.readByte();
+        this.write(dest, -this.read(src));
+    },
+    PLUS: function () {
+        const dest = this.readByte(), src = this.readByte();
+        this.write(dest, +this.read(src));
+    },
+    INCREMENT: function () {
+        const dest = this.readByte();
+        this.write(dest, this.read(dest) + 1);
+    },
+    DECREMENT: function () {
+        const dest = this.readByte();
+        this.write(dest, this.read(dest) - 1);
+    },
+    TYPEOF: function () {
+        const dest = this.readByte(), src = this.readByte();
+        this.write(dest, typeof this.read(src));
+    },
+    VOID: function () {
+        const dest = this.readByte(), src = this.readByte();
+        this.write(dest, void this.read(src));
+    },
+    DELETE: function () {
+        const dest = this.readByte(), src = this.readByte();
+        this.write(dest, delete this.read(src));
     },
     NOP: function () {
     },
