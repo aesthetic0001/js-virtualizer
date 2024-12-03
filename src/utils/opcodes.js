@@ -301,7 +301,11 @@ const implOpcode = {
     },
     GET_PROPERTIES: function () {
         const dest = this.readByte(), src = this.readByte();
-        this.write(dest, Object.getOwnPropertyNames(this.read(src)));
+        const res = Object.getOwnPropertyNames(this.read(src))
+        if (this.read(src) instanceof Array) {
+            res.pop()
+        }
+        this.write(dest, res);
     },
     NOP: function () {
     },

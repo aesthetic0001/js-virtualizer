@@ -15,6 +15,7 @@ const resolveUpdateExpression = require("../transformations/UpdateExpression");
 const resolveForStatement = require("../transformations/ForStatement");
 const resolveWhileStatement = require("../transformations/WhileStatement");
 const resolveForOfStatement = require("../transformations/ForOfStatement");
+const resolveForInStatement = require("../transformations/ForInStatement");
 
 const TL_COUNT = 30
 
@@ -59,6 +60,7 @@ class FunctionBytecodeGenerator {
         this.resolveIfStatement = resolveIfStatement.bind(this)
         this.resolveForStatement = resolveForStatement.bind(this)
         this.resolveForOfStatement = resolveForOfStatement.bind(this)
+        this.resolveForInStatement = resolveForInStatement.bind(this)
         this.resolveWhileStatement = resolveWhileStatement.bind(this)
     }
 
@@ -139,6 +141,10 @@ class FunctionBytecodeGenerator {
             }
             case 'ForOfStatement': {
                 this.resolveForOfStatement(node)
+                break
+            }
+            case 'ForInStatement': {
+                this.resolveForInStatement(node)
                 break
             }
             case 'WhileStatement': {
