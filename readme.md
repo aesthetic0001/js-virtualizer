@@ -20,9 +20,10 @@ virtualize.js is a proof-of-concept project which brings virtualization-based ob
 - [x] transpiler
 - [x] provide a proper `this` property to functions
 - [ ] template literals
-- [ ] proper for and while loops
+- [x] proper for and while loops
 - [ ] sequence expressions
 - [ ] arrow functions
+- [ ] object expressions
 - [ ] callbacks
 - [ ] add support for async functions in the context of the whole program
 - [ ] allow for declaration of classes (i don't know why you would want to init a class in a function but this is still a limitation of the current implementation)
