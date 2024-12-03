@@ -21,6 +21,7 @@ function resolveForInStatement(node) {
     this.chunk.append(new Opcode('ITERATOR_DONE', testRegister, variableRegister))
     this.chunk.append(new Opcode('ITERATOR_VALUE', variableRegister, variableRegister))
     this.chunk.append(new Opcode('TEST', testRegister, testRegister))
+    const endJumpIP = this.chunk.getCurrentIP()
     const endJump = new Opcode('JUMP_EQ', testRegister, encodeDWORD(0))
     this.chunk.append(endJump)
 
@@ -28,7 +29,7 @@ function resolveForInStatement(node) {
 
     this.chunk.append(new Opcode('JUMP_UNCONDITIONAL', encodeDWORD(startIP - this.chunk.getCurrentIP())))
 
-    endJump.modifyArgs(testRegister, encodeDWORD(this.chunk.getCurrentIP() - endJump.id))
+    endJump.modifyArgs(testRegister, encodeDWORD(this.chunk.getCurrentIP() - endJumpIP))
 
     if (needsCleanup(right)) this.freeTempLoad(rhs.outputRegister)
     if (rhs.borrowed) this.freeTempLoad(iteratorRegister)
