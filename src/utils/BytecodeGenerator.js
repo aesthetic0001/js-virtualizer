@@ -50,6 +50,10 @@ class FunctionBytecodeGenerator {
         this.takenLabels = new Set()
         // labels that need to be resolved
         this.processStack = []
+        // a bunch of stacks which contain the current relevant label for each context
+        this.contextLabels = {
+            loops: []
+        }
 
         this.resolveExpression = resolveExpression.bind(this)
         this.resolveBinaryExpression = resolveBinaryExpression.bind(this)
@@ -126,7 +130,7 @@ class FunctionBytecodeGenerator {
 
     generateOpcodeLabel() {
         while (true) {
-            const label = crypto.randomBytes(4).toString('hex')
+            const label = crypto.randomBytes(16).toString('hex')
             if (!this.takenLabels.has(label)) {
                 this.takenLabels.add(label)
                 return label
@@ -134,14 +138,23 @@ class FunctionBytecodeGenerator {
         }
     }
 
+    enterContext(type, label) {
+        this.contextLabels[type].push(label)
+    }
+
+    exitContext(type) {
+        this.contextLabels[type].pop()
+    }
+
+    getActiveLabel(type) {
+        return this.contextLabels[type][this.contextLabels[type].length - 1]
+    }
+
     // this is probably an expression
     handleNode(node, options) {
         options = options ?? {}
         // for vfuncs
         options.parentFunction = options.parentFunction ?? null
-
-        // for loops
-        options.label = options.label ?? null
 
         if (needsCleanup(node)) {
             const out = this.resolveExpression(node).outputRegister
@@ -228,19 +241,19 @@ class FunctionBytecodeGenerator {
             }
             case 'BreakStatement': {
                 const opcode = new Opcode('JUMP_UNCONDITIONAL', encodeDWORD(0))
-                opcode.markForProcessing(options.label, {
+                opcode.markForProcessing(this.getActiveLabel('loops'), {
                     type: 'break'
                 })
-                this.processStack.append(opcode)
+                this.processStack.push(opcode)
                 this.chunk.append(opcode)
                 break
             }
             case 'ContinueStatement': {
                 const opcode = new Opcode('JUMP_UNCONDITIONAL', encodeDWORD(0))
-                opcode.markForProcessing(options.label, {
+                opcode.markForProcessing(this.getActiveLabel('loops'), {
                     type: 'continue'
                 })
-                this.processStack.append(opcode)
+                this.processStack.push(opcode)
                 this.chunk.append(opcode)
                 break
             }
@@ -253,12 +266,14 @@ class FunctionBytecodeGenerator {
     }
 
     // generate bytecode for all converted values
-    generate(block) {
-        block = block || this.ast
+    generate(block, options) {
+        block = block ?? this.ast
+        options = options ?? {}
+
         this.activeScopes.push([])
         // perform a DFS on the block
         for (const node of block) {
-            this.handleNode(node)
+            this.handleNode(node, options)
         }
         // discard all variables in the current scope
         for (const variableName of this.activeScopes.pop()) {

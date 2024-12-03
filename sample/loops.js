@@ -10,8 +10,9 @@ function evaluate() {
         if (i === 5) {
             break
         }
-        // console.log("For of loop", i)
+        console.log("For of loop", i)
     }
+    // console.log('Done generic for loop')
     // for (const i in a) {
     //     console.log("For in loop", i)
     // }
