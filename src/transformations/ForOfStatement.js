@@ -32,6 +32,7 @@ function resolveForOfStatement(node) {
     if (needsCleanup(right)) this.freeTempLoad(iterator)
     if (iterator.borrowed) this.freeTempLoad(iteratorRegister)
     this.freeTempLoad(testRegister)
+    this.freeTempLoad(variableRegister)
 }
 
 module.exports = resolveForOfStatement
