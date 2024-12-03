@@ -147,6 +147,17 @@ const opNames = [
     // [dest, src]
     "DELETE",
 
+    // iterators
+    // [dest, src]
+    "GET_ITERATOR",
+    // [dest, src]
+    "ITERATOR_NEXT",
+    // [dest, src]
+    "ITERATOR_DONE",
+    // [dest, src]
+    "ITERATOR_VALUE",
+    // [dest, src]
+    "GET_PROPERTIES",
     // misc
     "NOP",
     // none

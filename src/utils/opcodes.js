@@ -98,6 +98,7 @@ const implOpcode = {
         const cur = this.read(registers.INSTRUCTION_POINTER);
         const register = this.readByte(), offset = this.readDWORD();
         if (this.read(register)) {
+            log(`Jumping to ${cur + offset - 1}`)
             this.registers[registers.INSTRUCTION_POINTER] = cur + offset - 1;
         }
     },
@@ -280,6 +281,27 @@ const implOpcode = {
     DELETE: function () {
         const dest = this.readByte(), src = this.readByte();
         this.write(dest, delete this.read(src));
+    },
+    GET_ITERATOR: function () {
+        const dest = this.readByte(), src = this.readByte();
+        this.write(dest, this.read(src)[Symbol.iterator]());
+    },
+    ITERATOR_NEXT: function () {
+        const dest = this.readByte(), iterator = this.readByte();
+        const next = this.read(iterator).next();
+        this.write(dest, next);
+    },
+    ITERATOR_DONE: function () {
+        const dest = this.readByte(), iterator = this.readByte();
+        this.write(dest, this.read(iterator).done);
+    },
+    ITERATOR_VALUE: function () {
+        const dest = this.readByte(), iterator = this.readByte();
+        this.write(dest, this.read(iterator).value);
+    },
+    GET_PROPERTIES: function () {
+        const dest = this.readByte(), src = this.readByte();
+        this.write(dest, Object.getOwnPropertyNames(this.read(src)));
     },
     NOP: function () {
     },

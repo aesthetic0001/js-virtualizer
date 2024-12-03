@@ -14,8 +14,9 @@ const resolveUnaryExpression = require("../transformations/UnaryExpression");
 const resolveUpdateExpression = require("../transformations/UpdateExpression");
 const resolveForStatement = require("../transformations/ForStatement");
 const resolveWhileStatement = require("../transformations/WhileStatement");
+const resolveForOfStatement = require("../transformations/ForOfStatement");
 
-const TL_COUNT = 14
+const TL_COUNT = 30
 
 class FunctionBytecodeGenerator {
     constructor(ast, chunk) {
@@ -57,6 +58,7 @@ class FunctionBytecodeGenerator {
 
         this.resolveIfStatement = resolveIfStatement.bind(this)
         this.resolveForStatement = resolveForStatement.bind(this)
+        this.resolveForOfStatement = resolveForOfStatement.bind(this)
         this.resolveWhileStatement = resolveWhileStatement.bind(this)
     }
 
@@ -133,6 +135,10 @@ class FunctionBytecodeGenerator {
             }
             case 'ForStatement': {
                 this.resolveForStatement(node)
+                break
+            }
+            case 'ForOfStatement': {
+                this.resolveForOfStatement(node)
                 break
             }
             case 'WhileStatement': {
