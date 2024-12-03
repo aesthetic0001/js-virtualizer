@@ -13,6 +13,7 @@ const resolveIfStatement = require("../transformations/IfStatement");
 const resolveUnaryExpression = require("../transformations/UnaryExpression");
 const resolveUpdateExpression = require("../transformations/UpdateExpression");
 const resolveForStatement = require("../transformations/ForStatement");
+const resolveWhileStatement = require("../transformations/WhileStatement");
 
 const TL_COUNT = 14
 
@@ -56,6 +57,7 @@ class FunctionBytecodeGenerator {
 
         this.resolveIfStatement = resolveIfStatement.bind(this)
         this.resolveForStatement = resolveForStatement.bind(this)
+        this.resolveWhileStatement = resolveWhileStatement.bind(this)
     }
 
     declareVariable(variableName, register) {
@@ -131,6 +133,10 @@ class FunctionBytecodeGenerator {
             }
             case 'ForStatement': {
                 this.resolveForStatement(node)
+                break
+            }
+            case 'WhileStatement': {
+                this.resolveWhileStatement(node)
                 break
             }
             case 'VariableDeclaration': {
