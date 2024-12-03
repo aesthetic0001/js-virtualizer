@@ -2,8 +2,6 @@ const JSVM = require('../src/vm.js');
 const {
     VMChunk,
     Opcode,
-    encodeString,
-    encodeFloat,
     encodeArrayRegisters,
     encodeDWORD
 } = require("../src/utils/assembler");

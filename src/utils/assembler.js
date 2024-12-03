@@ -5,7 +5,15 @@ class Opcode {
         this.name = name
         this.opcode = Buffer.from([opcodes[this.name]]);
         this.id = null
+        this.label = null
+        this.metadata = {}
         this.modifyArgs(...args);
+    }
+
+    markForProcessing(label, metadata) {
+        this.label = label
+        this.metadata = metadata
+        return this
     }
 
     modifyArgs(...args) {

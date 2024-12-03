@@ -1,4 +1,4 @@
-const {VMChunk, Opcode} = require("./assembler");
+const {VMChunk, Opcode, encodeDWORD} = require("./assembler");
 const crypto = require("crypto");
 const {registerNames, binaryOperatorToOpcode, needsCleanup} = require("./constants");
 const {log, LogData} = require("./log");
@@ -16,6 +16,7 @@ const resolveForStatement = require("../transformations/ForStatement");
 const resolveWhileStatement = require("../transformations/WhileStatement");
 const resolveForOfStatement = require("../transformations/ForOfStatement");
 const resolveForInStatement = require("../transformations/ForInStatement");
+const resolveFunctionDeclaration = require("../transformations/FunctionDeclaration");
 
 const TL_COUNT = 30
 
@@ -46,6 +47,9 @@ class FunctionBytecodeGenerator {
         // variables that are currently in the active scope, map of variable name to array of registers,
         // where the last element is the most recent register (active reference)
         this.activeVariables = {}
+        this.takenLabels = new Set()
+        // labels that need to be resolved
+        this.processStack = []
 
         this.resolveExpression = resolveExpression.bind(this)
         this.resolveBinaryExpression = resolveBinaryExpression.bind(this)
@@ -62,6 +66,7 @@ class FunctionBytecodeGenerator {
         this.resolveForOfStatement = resolveForOfStatement.bind(this)
         this.resolveForInStatement = resolveForInStatement.bind(this)
         this.resolveWhileStatement = resolveWhileStatement.bind(this)
+        this.resolveFunctionDeclaration = resolveFunctionDeclaration.bind(this)
     }
 
     declareVariable(variableName, register) {
@@ -119,8 +124,25 @@ class FunctionBytecodeGenerator {
         this.available[this.TLMap[register]] = true
     }
 
-    handleNode(node) {
-        // this is probably an expression
+    generateOpcodeLabel() {
+        while (true) {
+            const label = crypto.randomBytes(4).toString('hex')
+            if (!this.takenLabels.has(label)) {
+                this.takenLabels.add(label)
+                return label
+            }
+        }
+    }
+
+    // this is probably an expression
+    handleNode(node, options) {
+        options = options ?? {}
+        // for vfuncs
+        options.parentFunction = options.parentFunction ?? null
+
+        // for loops
+        options.label = options.label ?? null
+
         if (needsCleanup(node)) {
             const out = this.resolveExpression(node).outputRegister
             this.freeTempLoad(out)
@@ -155,13 +177,26 @@ class FunctionBytecodeGenerator {
                 for (const declaration of node.declarations) {
                     this.declareVariable(declaration.id.name, this.randomRegister());
                     if (declaration.init) {
-                        const out = this.resolveExpression(declaration.init).outputRegister
+                        let out = this.resolveExpression(declaration.init).outputRegister
+                        // if (declaration.init.type === 'FunctionDeclaration') {
+                        //     out = this.resolveFunctionDeclaration(declaration.init);
+                        //     log(`FunctionDeclaration result is at ${out}`)
+                        // } else {
+                        //     out = this.resolveExpression(declaration.init).outputRegister
+                        // }
                         this.chunk.append(new Opcode('SET_REF', this.getVariable(declaration.id.name), out));
                         if (needsCleanup(declaration.init)) this.freeTempLoad(out)
                     }
                 }
                 break;
             }
+            // case 'FunctionDeclaration': {
+            //     const name = node.id.name
+            //     const ip = this.resolveFunctionDeclaration(node)
+            //     this.declareVariable(name, ip)
+            //     log(`FunctionDeclaration result is at ${ip}`)
+            //     break
+            // }
             case 'ExpressionStatement': {
                 switch (node.expression.type) {
                     case 'AssignmentExpression': {
@@ -189,6 +224,24 @@ class FunctionBytecodeGenerator {
                         break
                     }
                 }
+                break
+            }
+            case 'BreakStatement': {
+                const opcode = new Opcode('JUMP_UNCONDITIONAL', encodeDWORD(0))
+                opcode.markForProcessing(options.label, {
+                    type: 'break'
+                })
+                this.processStack.append(opcode)
+                this.chunk.append(opcode)
+                break
+            }
+            case 'ContinueStatement': {
+                const opcode = new Opcode('JUMP_UNCONDITIONAL', encodeDWORD(0))
+                opcode.markForProcessing(options.label, {
+                    type: 'continue'
+                })
+                this.processStack.append(opcode)
+                this.chunk.append(opcode)
                 break
             }
             case 'ReturnStatement': {
