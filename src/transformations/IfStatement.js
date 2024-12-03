@@ -15,6 +15,7 @@ function resolveIfStatement(node) {
     const alternateJumpOpcode = new Opcode('JUMP_NOT_EQ', testResult, encodeDWORD(0))
     this.chunk.append(alternateJumpOpcode)
 
+    if (borrowed) this.freeTempLoad(testResult)
     if (needsCleanup(test)) this.freeTempLoad(testRegister)
 
     this.handleNode(consequent)

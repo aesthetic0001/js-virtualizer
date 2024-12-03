@@ -136,9 +136,9 @@ const opNames = [
     "NEGATE",
     // [dest, src]
     "PLUS",
-    // [dest, src]
+    // [src]
     "INCREMENT",
-    // [dest, src]
+    // [src]
     "DECREMENT",
     // [dest, src]
     "TYPEOF",
@@ -161,7 +161,7 @@ for (let i = 0; i < opNames.length; i++) {
     opcodes[opNames[i]] = i
 }
 
-function operatorToOpcode(operator) {
+function binaryOperatorToOpcode(operator) {
     switch (operator) {
         case '+': {
             return 'ADD';
@@ -229,6 +229,17 @@ function operatorToOpcode(operator) {
     }
 }
 
+function updateOperatorToOpcode(operator) {
+    switch (operator) {
+        case '++': {
+            return 'INCREMENT';
+        }
+        case '--': {
+            return 'DECREMENT';
+        }
+    }
+}
+
 function unaryOperatorToOpcode(operator) {
     switch (operator) {
         case '!': {
@@ -239,12 +250,6 @@ function unaryOperatorToOpcode(operator) {
         }
         case '+': {
             return 'PLUS';
-        }
-        case '++': {
-            return 'INCREMENT';
-        }
-        case '--': {
-            return 'DECREMENT';
         }
         case 'typeof': {
             return 'TYPEOF';
@@ -271,6 +276,7 @@ const cleanupNecessary = new Set([
     "ArrayExpression",
     "NewExpression",
     "UnaryExpression",
+    "UpdateExpression",
     "Literal"
 ])
 
@@ -285,7 +291,8 @@ module.exports = {
     registers,
     opNames,
     opcodes,
-    operatorToOpcode,
+    binaryOperatorToOpcode,
     unaryOperatorToOpcode,
+    updateOperatorToOpcode,
     needsCleanup
 }

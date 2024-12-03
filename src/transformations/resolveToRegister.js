@@ -7,6 +7,7 @@ function resolveExpression(expression, options) {
     options = options ?? {}
     options.computed = options.computed ?? true
     options.forceObjectImmutability = options.forceObjectImmutability ?? false
+    options.forceImmutableMerges = options.forceImmutableMerges ?? true
 
     const metadata = {}
     const {computed} = options
@@ -34,14 +35,14 @@ function resolveExpression(expression, options) {
             break
         }
         case 'MemberExpression': {
-            const resolved = this.resolveMemberExpression(expression, options.forceObjectImmutability);
+            const resolved = this.resolveMemberExpression(expression, options.forceObjectImmutability, options.forceImmutableMerges);
             outputRegister = resolved.outputRegister
             metadata.objectRegister = resolved.objectRegister
             log(`MemberExpression result is at ${this.TLMap[outputRegister]}`)
             break;
         }
         case 'BinaryExpression': {
-            outputRegister = this.resolveBinaryExpression(expression);
+            outputRegister = this.resolveBinaryExpression(expression, options.forceImmutableMerges);
             log(`BinaryExpression result is at ${this.TLMap[outputRegister]}`)
             break;
         }
@@ -66,8 +67,13 @@ function resolveExpression(expression, options) {
             break
         }
         case 'UnaryExpression': {
-            outputRegister = this.resolveUnaryExpression(expression);
+            outputRegister = this.resolveUnaryExpression(expression, options.forceImmutableMerges);
             log(`UnaryExpression result is at ${this.TLMap[outputRegister]}`)
+            break
+        }
+        case 'UpdateExpression': {
+            outputRegister = this.resolveUpdateExpression(expression);
+            log(`UpdateExpression result is at ${this.TLMap[outputRegister]}`)
             break
         }
     }

@@ -1,6 +1,6 @@
-const {VMChunk, Opcode, encodeDWORD, encodeFloat, encodeString, BytecodeValue} = require("./assembler");
+const {VMChunk, Opcode} = require("./assembler");
 const crypto = require("crypto");
-const {registerNames, operatorToOpcode, needsCleanup} = require("./constants");
+const {registerNames, binaryOperatorToOpcode, needsCleanup} = require("./constants");
 const {log, LogData} = require("./log");
 const resolveBinaryExpression = require("../transformations/BinaryExpression");
 const resolveMemberExpression = require("../transformations/MemberExpression");
@@ -11,6 +11,8 @@ const resolveNewExpression = require("../transformations/NewExpression");
 const resolveExpression = require("../transformations/resolveToRegister");
 const resolveIfStatement = require("../transformations/IfStatement");
 const resolveUnaryExpression = require("../transformations/UnaryExpression");
+const resolveUpdateExpression = require("../transformations/UpdateExpression");
+const resolveForStatement = require("../transformations/ForStatement");
 
 const TL_COUNT = 14
 
@@ -49,8 +51,11 @@ class FunctionBytecodeGenerator {
         this.resolveObjectExpression = resolveObjectExpression.bind(this)
         this.resolveArrayExpression = resolveArrayExpression.bind(this)
         this.resolveNewExpression = resolveNewExpression.bind(this)
-        this.resolveIfStatement = resolveIfStatement.bind(this)
         this.resolveUnaryExpression = resolveUnaryExpression.bind(this)
+        this.resolveUpdateExpression = resolveUpdateExpression.bind(this)
+
+        this.resolveIfStatement = resolveIfStatement.bind(this)
+        this.resolveForStatement = resolveForStatement.bind(this)
     }
 
     declareVariable(variableName, register) {
@@ -109,6 +114,12 @@ class FunctionBytecodeGenerator {
     }
 
     handleNode(node) {
+        // this is probably an expression
+        if (needsCleanup(node)) {
+            const out = this.resolveExpression(node).outputRegister
+            this.freeTempLoad(out)
+            return
+        }
         switch (node.type) {
             case 'BlockStatement': {
                 this.generate(node.body);
@@ -117,6 +128,10 @@ class FunctionBytecodeGenerator {
             case 'IfStatement': {
                 this.resolveIfStatement(node)
                 break;
+            }
+            case 'ForStatement': {
+                this.resolveForStatement(node)
+                break
             }
             case 'VariableDeclaration': {
                 for (const declaration of node.declarations) {
@@ -143,17 +158,17 @@ class FunctionBytecodeGenerator {
                                 break;
                             }
                             default: {
-                                const opcode = operatorToOpcode(operator.slice(0, -1));
+                                const opcode = binaryOperatorToOpcode(operator.slice(0, -1));
                                 log(`Evaluating inclusive assignment expression with ${operator} using ${opcode}`)
                                 this.chunk.append(new Opcode(opcode, leftRegister, leftRegister, rightRegister));
                             }
                         }
                         break;
                     }
-                    case 'CallExpression': {
-                        const out = this.resolveCallExpression(node.expression)
-                        this.freeTempLoad(out)
-                        break;
+                    default: {
+                        const out = this.resolveExpression(node.expression).outputRegister
+                        if (needsCleanup(node.expression)) this.freeTempLoad(out)
+                        break
                     }
                 }
                 break

@@ -7,7 +7,7 @@ function isNestedMemberExpression(node) {
 
 // returns the register with the result of the expression
 // forceObjectImmutability: used for function calls, so that we are able to store the function this value
-function resolveMemberExpression(node, forceObjectImmutability) {
+function resolveMemberExpression(node, forceObjectImmutability, forceImmutableMerges) {
     const {object, property, computed} = node;
     let objectRegister, propertyRegister
     let objectIsImmutable = forceObjectImmutability ?? false, propertyIsImmutable = false
@@ -41,7 +41,7 @@ function resolveMemberExpression(node, forceObjectImmutability) {
 
     log(`Immutability: object: ${objectIsImmutable}, property: ${propertyIsImmutable}`)
 
-    const mergeTo = (objectIsImmutable) ? (propertyIsImmutable ? this.getAvailableTempLoad() : propertyRegister) : objectRegister
+    const mergeTo = (forceImmutableMerges) ? this.getAvailableTempLoad() : ((objectIsImmutable) ? (propertyIsImmutable ? this.getAvailableTempLoad() : propertyRegister) : objectRegister)
     this.chunk.append(new Opcode('GET_PROP', mergeTo, objectRegister, propertyRegister));
 
     const objectTL = this.TLMap[objectRegister]

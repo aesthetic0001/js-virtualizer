@@ -1,4 +1,4 @@
-const {operatorToOpcode} = require("../utils/constants");
+const {binaryOperatorToOpcode} = require("../utils/constants");
 const {log} = require("../utils/log");
 const {Opcode, BytecodeValue} = require("../utils/assembler");
 
@@ -6,9 +6,9 @@ function isNestedBinaryExpression(node) {
     return node.left.type === 'BinaryExpression' || node.right.type === 'BinaryExpression'
 }
 
-function resolveBinaryExpression(node) {
+function resolveBinaryExpression(node, forceImmutableMerges) {
     const {left, right, operator} = node;
-    const opcode = operatorToOpcode(operator);
+    const opcode = binaryOperatorToOpcode(operator);
 
     let finalL, finalR
     let leftIsImmutable = false, rightIsImmutable = false
@@ -39,7 +39,7 @@ function resolveBinaryExpression(node) {
     }
 
     // always merge to the left
-    const mergeTo = (leftIsImmutable) ? (rightIsImmutable ? this.getAvailableTempLoad() : finalR) : finalL
+    const mergeTo = forceImmutableMerges ? this.getAvailableTempLoad() : ((leftIsImmutable) ? (rightIsImmutable ? this.getAvailableTempLoad() : finalR) : finalL)
     this.chunk.append(new Opcode(opcode, mergeTo, finalL, finalR));
     const leftTL = this.TLMap[finalL]
     const rightTL = this.TLMap[finalR]
