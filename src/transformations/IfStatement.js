@@ -2,40 +2,19 @@ const {log, LogData} = require("../utils/log");
 const {Opcode, BytecodeValue, encodeDWORD} = require("../utils/assembler");
 const {needsCleanup} = require("../utils/constants");
 
-// for consequent/alternate
 function resolveIfStatement(node) {
     const {test, consequent, alternate} = node;
 
     log(new LogData(`Resolving if statement`, 'accent', true))
 
-    let testRegister
-    let testImmutable = false
+    const {outputRegister: testRegister, borrowed} = this.resolveExpression(test)
 
-    switch (test.type) {
-        case 'Literal': {
-            const literalValue = new BytecodeValue(test.value, this.getAvailableTempLoad());
-            testRegister = literalValue.register
-            this.chunk.append(literalValue.getLoadOpcode());
-            break
-        }
-        case 'Identifier': {
-            testRegister = this.getVariable(test.name)
-            testImmutable = true
-            break
-        }
-        case 'BinaryExpression': {
-            testRegister = this.resolveBinaryExpression(test)
-            break
-        }
-    }
-
-    const testResult = testImmutable ? this.getAvailableTempLoad() : testRegister
+    const testResult = borrowed ? this.getAvailableTempLoad() : testRegister
     this.chunk.append(new Opcode('TEST', testResult, testRegister))
     const jumpIP = this.chunk.getCurrentIP()
     const alternateJumpOpcode = new Opcode('JUMP_NOT_EQ', testResult, encodeDWORD(0))
     this.chunk.append(alternateJumpOpcode)
 
-    if (testImmutable) this.freeTempLoad(testRegister)
     if (needsCleanup(test)) this.freeTempLoad(testRegister)
 
     this.handleNode(consequent)
