@@ -12,8 +12,9 @@ function evaluate() {
             console.log("Breaking at 7")
             break
         }
-        console.log("For of loop", i)
+        console.log(i)
     }
+    console.log("Done")
     // let
 }
 

@@ -64,9 +64,7 @@ class JSVM {
 
     // js integers are 32-bit signed
     readDWORD() {
-        const dword = this.readByte() << 24 | this.readByte() << 16 | this.readByte() << 8 | this.readByte()
-        log(`Read DWORD: ${dword}`)
-        return dword
+        return this.readByte() << 24 | this.readByte() << 16 | this.readByte() << 8 | this.readByte()
     }
 
     // taken from: https://github.com/jwillbold/rusty-jsyc/blob/master/vm/vm.js#L403
@@ -105,7 +103,6 @@ class JSVM {
         for (let i = 0; i < length; i++) {
             str += String.fromCharCode(this.readByte())
         }
-        log(`Read string of length ${length}: ${str}`)
         return str
     }
 

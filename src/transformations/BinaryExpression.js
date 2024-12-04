@@ -47,12 +47,12 @@ function resolveBinaryExpression(node, forceImmutableMerges) {
     const rightTL = this.TLMap[finalR]
     const mergedTL = this.TLMap[mergeTo]
 
-    if (leftTL && leftTL !== mergedTL) {
+    if (leftTL && leftTL !== mergedTL && !leftIsImmutable) {
         this.freeTempLoad(finalL)
         log(`BinaryExpression resolver: ${leftTL}`)
     }
 
-    if (rightTL && rightTL !== mergedTL) {
+    if (rightTL && rightTL !== mergedTL && !rightIsImmutable) {
         this.freeTempLoad(finalR)
         log(`BinaryExpression resolver: ${rightTL}`)
     }

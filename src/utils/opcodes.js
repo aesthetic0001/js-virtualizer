@@ -1,5 +1,5 @@
 const {registers} = require("./constants");
-const {log} = require("./log");
+const {log, LogData} = require("./log");
 
 const implOpcode = {
     LOAD_BYTE: function () {
@@ -12,6 +12,7 @@ const implOpcode = {
     },
     LOAD_DWORD: function () {
         const register = this.readByte(), value = this.readDWORD();
+        log(`Loading DWORD ${value} into register ${register}`)
         this.write(register, value);
     },
     LOAD_FLOAT: function () {
@@ -20,6 +21,7 @@ const implOpcode = {
     },
     LOAD_STRING: function () {
         const register = this.readByte(), value = this.readString();
+        log(`Loading string ${value} into register ${register}`)
         this.write(register, value);
     },
     LOAD_ARRAY: function () {
@@ -106,10 +108,10 @@ const implOpcode = {
         const cur = this.read(registers.INSTRUCTION_POINTER);
         const register = this.readByte(), offset = this.readDWORD();
         if (!this.read(register)) {
-            log(`Jumping to ${cur + offset - 1}`)
+            log(new LogData(`Jumping to ${cur + offset - 1}`, 'accent'))
             this.registers[registers.INSTRUCTION_POINTER] = cur + offset - 1;
         } else {
-            log(`Not jumping to ${cur + offset - 1}`)
+            log(new LogData(`Not jumping to ${cur + offset - 1}`, 'accent'))
         }
     },
     TRY_CATCH_FINALLY: function () {
@@ -151,7 +153,7 @@ const implOpcode = {
     },
     GET_PROP: function () {
         const dest = this.readByte(), object = this.readByte(), prop = this.readByte();
-        log(`Moving property ${this.read(prop)} from object tp ${dest}`)
+        log(`Moving property ${this.read(prop)} from object to ${dest}`)
         this.write(dest, this.read(object)[this.read(prop)]);
     },
     SET_INDEX: function () {
@@ -168,6 +170,7 @@ const implOpcode = {
     },
     EQ: function () {
         const dest = this.readByte(), left = this.readByte(), right = this.readByte();
+        log(`Comparing ${this.read(left)} (${left}) === ${this.read(right)} (${right}) => ${dest}`)
         this.write(dest, this.read(left) === this.read(right));
     },
     NOT_EQ_COERCE: function() {
