@@ -1,6 +1,7 @@
 const {Opcode, BytecodeValue, encodeDWORD} = require("../utils/assembler");
 const {needsCleanup} = require("../utils/constants");
 
+// ALWAYS produces a mutable result, ownership is transferred to the caller
 function resolveArrayExpression(node) {
     const {elements} = node
 

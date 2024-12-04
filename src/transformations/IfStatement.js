@@ -2,6 +2,7 @@ const {log, LogData} = require("../utils/log");
 const {Opcode, BytecodeValue, encodeDWORD} = require("../utils/assembler");
 const {needsCleanup} = require("../utils/constants");
 
+// VOID result, all registers are cleaned up before returning
 function resolveIfStatement(node) {
     const {test, consequent, alternate} = node;
 

@@ -2,6 +2,7 @@ const {log, LogData} = require("../utils/log");
 const {encodeDWORD, Opcode} = require("../utils/assembler");
 const {needsCleanup} = require("../utils/constants");
 
+// VOID result, all registers are cleaned up before returning
 function resolveForInStatement(node) {
     const {left, right, body} = node;
 

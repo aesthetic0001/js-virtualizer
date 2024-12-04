@@ -5,8 +5,9 @@ function isNestedMemberExpression(node) {
     return node.object.type === 'MemberExpression' || node.property.type === 'MemberExpression'
 }
 
-// returns the register with the result of the expression
 // forceObjectImmutability: used for function calls, so that we are able to store the function this value
+
+// ALWAYS produces a mutable result, ownership is transferred to the caller
 function resolveMemberExpression(node, forceObjectImmutability, forceImmutableMerges) {
     const {object, property, computed} = node;
     let objectRegister, propertyRegister
@@ -54,7 +55,7 @@ function resolveMemberExpression(node, forceObjectImmutability, forceImmutableMe
         log(`MemberExpression resolver: freed object at ${objectTL}`)
     }
 
-    if (propertyTL && propertyTL !== mergedTL) {
+    if (propertyTL && propertyTL !== mergedTL && !propertyIsImmutable) {
         this.freeTempLoad(propertyRegister)
         log(`MemberExpression resolver: freed property at ${propertyTL}`)
     }

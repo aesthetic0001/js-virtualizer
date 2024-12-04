@@ -1,6 +1,7 @@
 const {Opcode} = require("../utils/assembler");
 const {unaryOperatorToOpcode, needsCleanup} = require("../utils/constants");
 
+// ALWAYS produces a mutable result, ownership is transferred to the caller
 function resolveUnaryExpression(node, forceImmutableMerges) {
     const {argument, operator} = node;
     const opcode = unaryOperatorToOpcode(operator);

@@ -6,6 +6,7 @@ function isNestedBinaryExpression(node) {
     return node.left.type === 'BinaryExpression' || node.right.type === 'BinaryExpression'
 }
 
+// ALWAYS produces a mutable result, ownership is transferred to the caller
 function resolveBinaryExpression(node, forceImmutableMerges) {
     const {left, right, operator} = node;
     const opcode = binaryOperatorToOpcode(operator);

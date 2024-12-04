@@ -2,6 +2,7 @@ const {log} = require("../utils/log");
 const {Opcode, encodeDWORD} = require("../utils/assembler");
 const {needsCleanup} = require("../utils/constants");
 
+// ALWAYS produces a mutable result, ownership is transferred to the caller
 function resolveNewExpression(node) {
     const {callee, arguments} = node;
 

@@ -2,8 +2,7 @@ const {log} = require("../utils/log");
 const {Opcode, BytecodeValue, encodeDWORD} = require("../utils/assembler");
 const {registers, needsCleanup} = require("../utils/constants");
 
-// returns the register with the result of the expression, this should not require early DFS because
-// arguments are resolved and cleaned up immediately after they are used
+// ALWAYS produces a mutable result, ownership is transferred to the caller
 function resolveCallExpression(node) {
     const {callee, arguments} = node;
 
