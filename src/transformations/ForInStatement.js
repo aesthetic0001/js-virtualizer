@@ -5,6 +5,7 @@ const {needsCleanup} = require("../utils/constants");
 // VOID result, all registers are cleaned up before returning
 function resolveForInStatement(node) {
     const {left, right, body} = node;
+    const label = this.generateOpcodeLabel()
 
     log(new LogData(`Resolving for .. in`, 'accent', true))
 
@@ -25,17 +26,38 @@ function resolveForInStatement(node) {
     const endJumpIP = this.chunk.getCurrentIP()
     const endJump = new Opcode('JUMP_EQ', testRegister, encodeDWORD(0))
     this.chunk.append(endJump)
-
+    this.enterContext('loops', label)
     this.handleNode(body)
-
+    const continueGoto = this.chunk.getCurrentIP()
     this.chunk.append(new Opcode('JUMP_UNCONDITIONAL', encodeDWORD(startIP - this.chunk.getCurrentIP())))
-
     endJump.modifyArgs(testRegister, encodeDWORD(this.chunk.getCurrentIP() - endJumpIP))
+
+    while (this.processStack.length) {
+        const top = this.processStack[this.processStack.length - 1]
+        if (top.label !== label) {
+            break
+        }
+        const {type, ip} = top.metadata
+        switch (type) {
+            case 'break': {
+                log(new LogData(`Detected break statement at ${ip}, jumping to end of for of loop`, 'accent', true))
+                top.modifyArgs(encodeDWORD(this.chunk.getCurrentIP() - ip))
+                break
+            }
+            case 'continue': {
+                log(new LogData(`Detected continue statement at ${ip}, jumping to start of for of loop`, 'accent', true))
+                top.modifyArgs(encodeDWORD(continueGoto - ip))
+                break
+            }
+        }
+        this.processStack.pop()
+    }
 
     if (needsCleanup(right)) this.freeTempLoad(rhs.outputRegister)
     if (rhs.borrowed) this.freeTempLoad(iteratorRegister)
     this.freeTempLoad(testRegister)
     this.freeTempLoad(variableRegister)
+    this.exitContext('loops')
 }
 
 module.exports = resolveForInStatement

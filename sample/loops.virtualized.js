@@ -8,12 +8,12 @@ const a = [
 ];
 function evaluate() {
     const VM = new JSVM();
-    VM.loadFromString('eJyFzj0KwkAQBeBnXDAQ/KlMYbOEwJbT+QsW4jSeINVCihAkkoB4iwH3jLnD9pENiKXdvAffY/aiDyxHwyfmzJilAfCOCMBs45ky71cewE2Favro6rV3FIcwiSwARH24VQFgfnlWZXNva12+9C4lW+TW9oknRwsA2z8bKVn+gWEYGiVfYJzEMgIewYhV+Exdu7ZKhX3OTIkRJ+cPhd4wbw==', 'base64');
+    VM.loadFromString('789ca5d0cd4ac3401486e1d34cc5d26a8d28c6434142e872362588f5a72e5c2808a24404972d187b92c6a694eafdb87337aeb2ef9d7805de80d0c84c6b1b3a280177c9903c5ff21a0800b0eda1212fca7bcc438731930114caea88d5c84387c82400b82aaaa328eeee508225795330b8140c21af8b210098b7bd603008fa5d3bb05bad96ed5ac8c33ae7a24298601500de94bc92956ff2c85b6743bfd393726734c3f735dcd3254393d6cee3a11df9233b8ae3c10f6121f7e694eb55d374f2b9c0d8fcb348615c6192dccc62f643dcf72d245127e21586099e60bb89784878c4e898c8616c43e6c5a2121a3541dc11c294d29d3a537322e125f58011aab92735370680dda5be4ec3b15f3ad1b36ff1705c0fc3a78ae0099729dea7136e76e23ecf444d0fedb8bfad5ceba2a18915d928e84f7bcf048b87b490d274f291a7b69991f4d84d6c2f97862ff536cb56b8c853a13c0fed6a3ffdaaccd5ac7999c75ccf963df847cbf8f1ef9693dc2d6792def2f41b4655dcf9', 'hex');
     VM.loadDependencies({
-        32: a,
-        143: console
+        96: a,
+        182: console
     });
     VM.run();
-    return VM.registers[83];
+    return VM.registers[205];
 }
 evaluate();
