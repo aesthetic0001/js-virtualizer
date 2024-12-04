@@ -8,12 +8,12 @@ const a = [
 ];
 function evaluate() {
     const VM = new JSVM();
-    VM.loadFromString('eJyl1EGL00AUwPHXbMWSas2yi1EKEkMve1yCuLqtoAd9CLKLIs9rF+MaEpqyu+5XmG8wd2859OCnydlP4M2ToZF5aZtxZ5UBb0lofy/5wzyHAAB2U3LUhfsAUwoRPQTouPxoayhTCqX0JAC86fKjLD+9KwvqqZuOI5TgVOq6WwKA9y5N5vNkdhokwWQyCSKfRDkSoupLKmgAAAXLN3T52EbeeXEWT1MlTy9W+CMDf2tKjiHdepmfBVl8EWR5Pl8TPol0Q0XpoK6XP1oMN68lGROMKXJbx4KP+Sz2SVYjKUUfqaAx7R0QPZH0FOWhlCHiHZX3fpeF/WElRVhVnpLe8zMeVxWixz9wSh53wuPGAHDvSt9wPwwup9mX2BfleFSWJ/1KFEKl+NaMiPQRH2xGDM3QYfS3KUem6BhiXzVKZk3vleCLUrZSXS+/29T2NMmMfUB7V0vDL/73ll7hlU0FdxM6Mj76K5s3dfO1jXlbL/v4P1rmn/7dcmndciWZLZ1mNyyoQ52QyCNeCtgshQWuj+5RF9sDhz20XAq4PrdYYLRo1gI2a6G1j23sa9eCzg+ul8y14NLnJIubsCvAR7HQ37Oulz9t0gYtxWVd93mW8e053z/8I/Wz35gHfpU=', 'base64');
+    VM.loadFromString('eJyl1M+L00AUwPHXbMWSao2sOEpBYii97wvi+qOCHhSEsosimtsWjGvY0JR11/P7Fyb/gTchF/+F+U8878GbJ6GReWmbcWeVAW9JaD8v+cI8DwEAbiTo6Qv/DiUYEQUE0PH50dZQJhhJGUgAmHb5UV4c3pQl9vRNx1Na8Cp93RUAELw+yhaLbH4YZuFkMgljgUqMlKr6EkscAMBXli+Z8r6LvP3sOJ0daXl2ssLvWfgrW/Is6crz4jjM05MwL4rFmhCokg0VJ4O6Xv5oMdq8lmRMMabJ6yYWvi/mqUBZjaRUfcISH+N0F/GBxIckH0kZEV3TeW93WdgZVlJFVRVo6Q0/43FVqXr8A0/wuAMedwYAt871jXai8PMsP02FEmcjIQ76lSqVTvGtGRGbI965jBjaoaP4b1P2bNGzxL5ulM2b3itBKCFbqa6X311qB4Zkx97F6fnS8Iv/vWVWeOFSwd+Ejq2P/sLmZdN86WJeNcve/4+WxYd/t1w6t1xJdkuv2Q1j7GAnQgyQlwI1S2FM66O716X2wFGPHJcCrc8tlRSPm7VAzVpo7X0X+8K1YPKDiyV7LfhvP2Z52oRdAYLU2HzPul7+dEkbthSX9f2nec63n/j+7h+pn/wGhrZjpA==', 'base64');
     VM.loadDependencies({
-        41: a,
-        168: console
+        77: a,
+        146: console
     });
     VM.run();
-    return VM.registers[216];
+    return VM.registers[141];
 }
 evaluate();

@@ -79,15 +79,34 @@ const implOpcode = {
         }
         this.registers[registers.INSTRUCTION_POINTER] = cur + offset - 1;
     },
+    VFUNC_SETUP_CALLBACK: function () {
+        const cur = this.read(registers.INSTRUCTION_POINTER);
+        const fnOffset = this.readDWORD(),
+            dest = this.readByte(),
+            returnDataStore = this.readByte(),
+            argArrayMapper = this.readArrayRegisters();
+        const write = this.write
+        const read = this.read
+        function cb(...args) {
+            this.regstack.push([this.registers.slice(), returnDataStore]);
+            for (let i = 0; i < args.length; i++) {
+                write(argArrayMapper[i], args[i]);
+            }
+            this.registers[registers.INSTRUCTION_POINTER] = cur + fnOffset - 1;
+            this.run()
+            return read(returnDataStore);
+        }
+        this.write(dest, cb.bind(this));
+    },
     VFUNC_RETURN: function () {
         const internalReturnReg = this.readByte();
-        const scopedRegs = this.readArrayRegisters();
+        const restoreRegisters = this.readArrayRegisters();
         const retValue = this.read(internalReturnReg);
-        const [registers, returnDataStore] = this.regstack.pop();
-        const doNotRestore = new Set(scopedRegs);
-        for (let i = 0; i < registers.length; i++) {
-            if (doNotRestore.has(i)) continue;
-            this.registers[i] = registers[i];
+        const [oldRegisters, returnDataStore] = this.regstack.pop();
+
+        restoreRegisters.push(registers.INSTRUCTION_POINTER);
+        for (const restoreRegister of restoreRegisters) {
+            this.registers[restoreRegister] = oldRegisters[restoreRegister];
         }
         this.write(returnDataStore, retValue);
     },

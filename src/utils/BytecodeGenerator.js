@@ -52,8 +52,15 @@ class FunctionBytecodeGenerator {
         this.processStack = []
         // a bunch of stacks which contain the current relevant label for each context
         this.contextLabels = {
-            loops: []
+            loops: [],
+            vfunc: []
         }
+        // like activeVariables but for functions
+        // contains important information such as the IP of the function, register map for the arguments, dependencies, etc.
+        this.activeFunctions = {}
+        // for variables that are out of current scope but still accessible
+        // ie. by functions
+        this.dropDefers = {}
 
         this.resolveExpression = resolveExpression.bind(this)
         this.resolveBinaryExpression = resolveBinaryExpression.bind(this)
@@ -73,6 +80,15 @@ class FunctionBytecodeGenerator {
         this.resolveFunctionDeclaration = resolveFunctionDeclaration.bind(this)
     }
 
+    dropVariable(variableName) {
+        if (!this.activeVariables[variableName]) {
+            log(new LogData(`Attempted to drop variable ${variableName} which is not in scope! Skipping`, 'warn', false))
+            return
+        }
+        const register = this.activeVariables[variableName].pop()
+        this.removeRegister(register)
+    }
+
     declareVariable(variableName, register) {
         if (this.activeVariables[variableName]) {
             this.activeVariables[variableName].push(register || this.randomRegister())
@@ -89,11 +105,24 @@ class FunctionBytecodeGenerator {
             log(new LogData(`Variable ${variableName} not found in scope!`, 'error', false))
             throw new Error(`Variable ${variableName} not found in scope!`)
         }
+        if (this.getActiveLabel('vfunc')) {
+            const accessContext = this.getActiveLabel('vfunc')
+            const declaredContext =
+        }
         return scopeArray[scopeArray.length - 1]
     }
 
     removeRegister(register) {
+        if (this.dropDefers[register] && this.dropDefers[register] > 0) {
+            log(new LogData(`Prohibiting dropping of required register ${register}`, 'warn'))
+            return
+        }
         this.reservedRegisters.delete(register);
+    }
+
+    deferDrop(register) {
+        if (!this.dropDefers[register]) this.dropDefers[register] = 0
+        this.dropDefers[register] += 1
     }
 
     randomRegister() {
@@ -151,11 +180,8 @@ class FunctionBytecodeGenerator {
     }
 
     // this is probably an expression
-    handleNode(node, options) {
-        options = options ?? {}
+    handleNode(node) {
         // for vfuncs
-        options.parentFunction = options.parentFunction ?? null
-
         if (needsCleanup(node)) {
             const out = this.resolveExpression(node).outputRegister
             this.freeTempLoad(out)
@@ -279,8 +305,7 @@ class FunctionBytecodeGenerator {
         }
         // discard all variables in the current scope
         for (const variableName of this.activeScopes.pop()) {
-            const allocatedRegister = this.activeVariables[variableName].pop()
-            this.removeRegister(allocatedRegister)
+            this.dropVariable(variableName)
         }
     }
 
