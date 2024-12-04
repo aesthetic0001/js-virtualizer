@@ -242,19 +242,21 @@ class FunctionBytecodeGenerator {
             case 'BreakStatement': {
                 const opcode = new Opcode('JUMP_UNCONDITIONAL', encodeDWORD(0))
                 opcode.markForProcessing(this.getActiveLabel('loops'), {
-                    type: 'break'
+                    type: 'break',
+                    ip: this.chunk.getCurrentIP()
                 })
-                this.processStack.push(opcode)
                 this.chunk.append(opcode)
+                this.processStack.push(opcode)
                 break
             }
             case 'ContinueStatement': {
                 const opcode = new Opcode('JUMP_UNCONDITIONAL', encodeDWORD(0))
                 opcode.markForProcessing(this.getActiveLabel('loops'), {
-                    type: 'continue'
+                    type: 'continue',
+                    ip: this.chunk.getCurrentIP()
                 })
-                this.processStack.push(opcode)
                 this.chunk.append(opcode)
+                this.processStack.push(opcode)
                 break
             }
             case 'ReturnStatement': {

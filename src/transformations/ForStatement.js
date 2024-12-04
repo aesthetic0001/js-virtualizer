@@ -29,28 +29,27 @@ function resolveForStatement(node) {
         label
     })
 
+    const continueGoto = this.chunk.getCurrentIP()
     this.handleNode(update)
 
-    const jumpback = startIP - this.chunk.getCurrentIP()
-    this.chunk.append(new Opcode('JUMP_UNCONDITIONAL', encodeDWORD(jumpback)))
-
-    const jumpout = this.chunk.getCurrentIP() - endJumpIP
-    endJump.modifyArgs(testResult, encodeDWORD(jumpout))
-
-    this.exitContext('loops')
+    this.chunk.append(new Opcode('JUMP_UNCONDITIONAL', encodeDWORD(startIP - this.chunk.getCurrentIP())))
+    endJump.modifyArgs(testResult, encodeDWORD(this.chunk.getCurrentIP() - endJumpIP))
 
     while (this.processStack.length) {
         const top = this.processStack[this.processStack.length - 1]
         if (top.label !== label) {
             break
         }
-        switch (top.metadata.type) {
+        const {type, ip} = top.metadata
+        switch (type) {
             case 'break': {
-                top.modifyArgs(encodeDWORD(jumpout))
+                log(new LogData(`Detected break statement at ${ip}, jumping to end of loop`, 'accent', true))
+                top.modifyArgs(encodeDWORD(this.chunk.getCurrentIP() - ip))
                 break
             }
             case 'continue': {
-                top.modifyArgs(encodeDWORD(jumpback))
+                log(new LogData(`Detected continue statement at ${ip}, jumping to start of loop`, 'accent', true))
+                top.modifyArgs(encodeDWORD(continueGoto - ip))
                 break
             }
         }
@@ -59,6 +58,7 @@ function resolveForStatement(node) {
 
     if (borrowed) this.freeTempLoad(testResult)
     if (needsCleanup(test)) this.freeTempLoad(testRegister)
+    this.exitContext('loops')
 }
 
 module.exports = resolveForStatement
