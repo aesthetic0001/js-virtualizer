@@ -9,7 +9,7 @@ const {FunctionBytecodeGenerator} = require("./utils/BytecodeGenerator");
 const escodegen = require("escodegen");
 const {log, LogData} = require("./utils/log");
 const zlib = require("node:zlib");
-const encodings = ['base64', 'hex']
+const encodings = ['base64']
 
 function virtualizeFunctions(code) {
     const comments = [];
