@@ -8,12 +8,12 @@ const a = [
 ];
 function evaluate() {
     const VM = new JSVM();
-    VM.loadFromString('eJyFzT0KwkAQBeBnXDAQ/GnGsKQJIWfwFyxEtvAQG1KEIJEsiOfwBnMJjzJn2T6yAbG0m/fge7Pj997zwfij94UxSwPgFRGAWSaeCpGVALiqUE3vrl2LpjiESWQBIKrCrRyA+fnR1N2tb/P6mW9Tsq60tkqENC0AbP5spGT9DwzD0Cn+AqM55hHQCGR8GrC6uL5JmWxJJIlhzacPiL4upQ==', 'base64');
+    VM.loadFromString('eJyFzj0KwkAQBeBnXDAQ/KlMYbOEwJbT+QsW4jSeINVCihAkkoB4iwH3jLnD9pENiKXdvAffY/aiDyxHwyfmzJilAfCOCMBs45ky71cewE2Favro6rV3FIcwiSwARH24VQFgfnlWZXNva12+9C4lW+TW9oknRwsA2z8bKVn+gWEYGiVfYJzEMgIewYhV+Exdu7ZKhX3OTIkRJ+cPhd4wbw==', 'base64');
     VM.loadDependencies({
-        25: console,
-        178: a
+        32: a,
+        143: console
     });
     VM.run();
-    return VM.registers[199];
+    return VM.registers[83];
 }
 evaluate();
