@@ -4,6 +4,7 @@ const {needsCleanup} = require("../utils/constants");
 
 function resolveForOfStatement(node) {
     const {left, right, body} = node;
+    const label = this.generateOpcodeLabel()
 
     log(new LogData(`Resolving for .. of`, 'accent', true))
 
@@ -12,7 +13,7 @@ function resolveForOfStatement(node) {
     const testRegister = this.getAvailableTempLoad()
     this.declareVariable(left.declarations[0].id.name, this.getAvailableTempLoad())
     const variableRegister = this.getVariable(left.declarations[0].id.name)
-    log(`Declaring iteration store variable ${left.declarations[0].id.name} with register ${iteratorRegister}`)
+    log(`Declared iteration store variable ${left.declarations[0].id.name} at register ${variableRegister}`)
 
     this.chunk.append(new Opcode('GET_ITERATOR', iteratorRegister, iterator.outputRegister))
     const startIP = this.chunk.getCurrentIP()
@@ -23,17 +24,38 @@ function resolveForOfStatement(node) {
     const endJumpIP = this.chunk.getCurrentIP()
     const endJump = new Opcode('JUMP_EQ', testRegister, encodeDWORD(0))
     this.chunk.append(endJump)
-
+    this.enterContext('loops', label)
     this.handleNode(body)
-
+    const continueGoto = this.chunk.getCurrentIP()
     this.chunk.append(new Opcode('JUMP_UNCONDITIONAL', encodeDWORD(startIP - this.chunk.getCurrentIP())))
-
     endJump.modifyArgs(testRegister, encodeDWORD(this.chunk.getCurrentIP() - endJumpIP))
+
+    while (this.processStack.length) {
+        const top = this.processStack[this.processStack.length - 1]
+        if (top.label !== label) {
+            break
+        }
+        const {type, ip} = top.metadata
+        switch (type) {
+            case 'break': {
+                log(new LogData(`Detected break statement at ${ip}, jumping to end of for of loop`, 'accent', true))
+                top.modifyArgs(encodeDWORD(this.chunk.getCurrentIP() - ip))
+                break
+            }
+            case 'continue': {
+                log(new LogData(`Detected continue statement at ${ip}, jumping to start of for of loop`, 'accent', true))
+                top.modifyArgs(encodeDWORD(continueGoto - ip))
+                break
+            }
+        }
+        this.processStack.pop()
+    }
 
     if (needsCleanup(right)) this.freeTempLoad(iterator)
     if (iterator.borrowed) this.freeTempLoad(iteratorRegister)
     this.freeTempLoad(testRegister)
-    this.freeTempLoad(variableRegister)
+    // this.freeTempLoad(variableRegister)
+    this.exitContext('loops')
 }
 
 module.exports = resolveForOfStatement

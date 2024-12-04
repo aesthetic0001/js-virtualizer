@@ -84,6 +84,7 @@ class FunctionBytecodeGenerator {
 
     getVariable(variableName) {
         log(`Getting variable ${variableName}`)
+        console.log(this.activeVariables)
         const scopeArray = this.activeVariables[variableName]
         if (!scopeArray) {
             log(new LogData(`Variable ${variableName} not found in scope!`, 'error', false))

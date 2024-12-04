@@ -7,7 +7,9 @@ function resolveIfStatement(node) {
 
     log(new LogData(`Resolving if statement`, 'accent', true))
 
-    const {outputRegister: testRegister, borrowed} = this.resolveExpression(test)
+    const {outputRegister: testRegister, borrowed} = this.resolveExpression(test, {
+        forceImmutableMerges: true
+    })
 
     const testResult = borrowed ? this.getAvailableTempLoad() : testRegister
     this.chunk.append(new Opcode('TEST', testResult, testRegister))

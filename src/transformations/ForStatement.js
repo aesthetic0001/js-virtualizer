@@ -17,17 +17,15 @@ function resolveForStatement(node) {
     })
     const testResult = borrowed ? this.getAvailableTempLoad() : testRegister
 
-    this.enterContext('loops', label)
-
     this.chunk.append(new Opcode('TEST', testResult, testRegister))
     // this will exit the loop if the test fails
     const endJumpIP = this.chunk.getCurrentIP()
     const endJump = new Opcode('JUMP_NOT_EQ', testResult, encodeDWORD(0))
     this.chunk.append(endJump)
 
-    this.handleNode(node.body, {
-        label
-    })
+    this.enterContext('loops', label)
+
+    this.handleNode(node.body)
 
     const continueGoto = this.chunk.getCurrentIP()
     this.handleNode(update)

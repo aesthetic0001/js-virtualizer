@@ -30,12 +30,14 @@ function resolveBinaryExpression(node, forceImmutableMerges) {
         const {outputRegister, borrowed} = this.resolveExpression(left);
         finalL = outputRegister
         leftIsImmutable = borrowed
+        log(`Left is at ${this.TLMap[finalL]}`)
     }
 
     if (!finalR) {
         const {outputRegister, borrowed} = this.resolveExpression(right);
         finalR = outputRegister
         rightIsImmutable = borrowed
+        log(`Right is at ${this.TLMap[finalR]}`)
     }
 
     // always merge to the left
