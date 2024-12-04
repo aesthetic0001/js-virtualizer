@@ -39,11 +39,21 @@ function evaluate() {
         console.log("For of loop", i)
     }
     console.log("For of loop done")
-    // let i = 0
-    // while (i < 10) {
-    //     console.log("While loop", i)
-    //     i++
-    // }
+    let i = 0
+    while (true) {
+        if (i === 3) {
+            console.log("Skipping i === 3")
+            i++
+            continue
+        }
+        if (i === 5) {
+            console.log("Breaking at i === 5")
+            break
+        }
+        console.log("While loop", i)
+        i++
+    }
+    console.log("While loop done\n\nAll loops done!")
 }
 
 evaluate()
