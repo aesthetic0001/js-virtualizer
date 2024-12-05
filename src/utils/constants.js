@@ -299,6 +299,9 @@ function logicalOperatorToOpcode(operator) {
         case '||': {
             return 'LOGICAL_OR';
         }
+        case '??': {
+            return 'LOGICAL_NULLISH';
+        }
     }
 }
 
@@ -313,6 +316,7 @@ const cleanupNecessary = new Set([
     "NewExpression",
     "UnaryExpression",
     "UpdateExpression",
+    "LogicalExpression",
     "Literal"
 ])
 
