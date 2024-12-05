@@ -8,10 +8,7 @@ function resolveFunctionDeclaration(node) {
     const functionResult = this.getAvailableTempLoad()
     const outputRegister = this.getAvailableTempLoad()
     const argMap = []
-    const restoreRegisters = []
     const dependencies = []
-
-    restoreRegisters.push(outputRegister)
 
     const jumpOverIP = this.chunk.getCurrentIP()
     const jumpOver = new Opcode('JUMP_UNCONDITIONAL', encodeDWORD(0))

@@ -104,9 +104,10 @@ const implOpcode = {
             this.run()
             const res = this.read(returnDataStore);
             const [oldRegisters] = this.regstack.pop();
+            const curRegisters = this.registers.slice();
             this.registers = oldRegisters;
             for (const mutableRegister of mutableRegisters) {
-                this.registers[mutableRegister] = oldRegisters[mutableRegister];
+                this.registers[mutableRegister] = curRegisters[mutableRegister];
             }
             log(`Callback result: ${res}`)
             return res

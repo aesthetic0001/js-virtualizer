@@ -115,7 +115,7 @@ class FunctionBytecodeGenerator {
             const accessContext = this.getActiveLabel('vfunc')
             if (metadata.vfuncContext !== accessContext) {
                 log(new LogData(`VFunc capturing variable ${variableName} by reference! Current Context: ${accessContext}, Variable Context: ${metadata.vfuncContext}`, 'warn', false))
-                this.vfuncReferences[this.vfuncReferences.length - 1].add(variableName)
+                this.vfuncReferences[this.vfuncReferences.length - 1].add(register)
             }
         }
         return register
@@ -146,6 +146,7 @@ class FunctionBytecodeGenerator {
     getAvailableTempLoad() {
         for (const [register, available] of Object.entries(this.available)) {
             if (available) {
+                log(new LogData(`Allocating temp load register ${this.TLMap[register]}`, 'accent', false))
                 this.available[register] = false
                 return this[register]
             }
