@@ -14,12 +14,11 @@ function evaluate() {
         console.log(a)
     }
 
-    console.log(local2())
-    console.log(local2())
-    console.log(local2())
-    console.log(local2())
-    console.log(local2())
-    console.log(local2())
+    for (let i = 0; i < 10; i++) {
+        local2()
+    }
+
+    console.log('Done')
     console.log(a)
 }
 
