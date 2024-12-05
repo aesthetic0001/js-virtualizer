@@ -19,6 +19,7 @@ const resolveForInStatement = require("../transformations/ForInStatement");
 const resolveFunctionDeclaration = require("../transformations/FunctionDeclaration");
 const resolveLogicalExpression = require("../transformations/LogicalExpression");
 const resolveConditionalExpression = require("../transformations/ConditionalExpression");
+const resolveArrowFunctionExpression = require("../transformations/ArrowFunctionExpression");
 
 const TL_COUNT = 30
 
@@ -76,6 +77,7 @@ class FunctionBytecodeGenerator {
         this.resolveUnaryExpression = resolveUnaryExpression.bind(this)
         this.resolveUpdateExpression = resolveUpdateExpression.bind(this)
         this.resolveConditionalExpression = resolveConditionalExpression.bind(this)
+        this.resolveArrowFunctionExpression = resolveArrowFunctionExpression.bind(this)
 
         this.resolveIfStatement = resolveIfStatement.bind(this)
         this.resolveForStatement = resolveForStatement.bind(this)
@@ -241,13 +243,17 @@ class FunctionBytecodeGenerator {
                 for (const declaration of node.declarations) {
                     this.declareVariable(declaration.id.name, this.randomRegister());
                     if (declaration.init) {
-                        let out = this.resolveExpression(declaration.init).outputRegister
-                        // if (declaration.init.type === 'FunctionDeclaration') {
-                        //     out = this.resolveFunctionDeclaration(declaration.init);
-                        //     log(`FunctionDeclaration result is at ${out}`)
-                        // } else {
-                        //     out = this.resolveExpression(declaration.init).outputRegister
-                        // }
+                        let out
+                        switch (declaration.init.type) {
+                            case 'FunctionDeclaration': {
+                                out = this.resolveFunctionDeclaration(declaration.init).outputRegister
+                                break
+                            }
+                            default: {
+                                out = this.resolveExpression(declaration.init).outputRegister
+                                if (needsCleanup(declaration.init)) this.freeTempLoad(out)
+                            }
+                        }
                         this.chunk.append(new Opcode('SET_REF', this.getVariable(declaration.id.name), out));
                         if (needsCleanup(declaration.init)) this.freeTempLoad(out)
                     }

@@ -6,15 +6,11 @@ function main() {
     const app = express();
     const port = 3000;
 
-    function onGet(req, res) {
+    app.get('/', (req, res) => {
         res.send('Hello World!')
-    }
+    })
 
-    function onListen() {
-        console.log("Example app listening at http://localhost:" + port)
-    }
-
-    function onGetLoop(req, res) {
+    app.get('/bottlesOfBeer', (req, res) => {
         const params = req.query
         let times = params.times
         if (!times) {
@@ -38,12 +34,11 @@ function main() {
             }
         }
         res.send(result.join(', '))
-    }
+    })
 
-    app.get('/', onGet)
-    app.get('/bottlesOfBeer', onGetLoop)
-
-    app.listen(port, onListen)
+    app.listen(port, () => {
+        console.log("Example app listening at http://localhost:" + port)
+    })
 }
 
 main()
