@@ -155,6 +155,12 @@ const opNames = [
     // [dest, src]
     "DELETE",
 
+    // logical
+    // [dest, left, right]
+    "LOGICAL_AND",
+    // [dest, left, right]
+    "LOGICAL_OR",
+
     // iterators
     // [dest, src]
     "GET_ITERATOR",
@@ -285,6 +291,17 @@ function unaryOperatorToOpcode(operator) {
     }
 }
 
+function logicalOperatorToOpcode(operator) {
+    switch (operator) {
+        case '&&': {
+            return 'LOGICAL_AND';
+        }
+        case '||': {
+            return 'LOGICAL_OR';
+        }
+    }
+}
+
 // types which are not automatically dropped by the transpiler
 // ie. all types that are not identifiers (variables) which still take up a register
 const cleanupNecessary = new Set([
@@ -313,5 +330,6 @@ module.exports = {
     binaryOperatorToOpcode,
     unaryOperatorToOpcode,
     updateOperatorToOpcode,
+    logicalOperatorToOpcode,
     needsCleanup
 }

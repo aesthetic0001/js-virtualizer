@@ -1,6 +1,5 @@
 const {BytecodeValue} = require("../utils/assembler");
 const {log, LogData} = require("../utils/log");
-const {registers} = require("../utils/constants");
 
 // Produces a result that may be mutable or immutable, depending on the expression that was resolved
 // Ownership is explicitly stated in the "borrowed" field of the return object
@@ -76,6 +75,11 @@ function resolveExpression(expression, options) {
         case 'UpdateExpression': {
             outputRegister = this.resolveUpdateExpression(expression);
             log(`UpdateExpression result is at ${this.TLMap[outputRegister]}`)
+            break
+        }
+        case 'LogicalExpression': {
+            outputRegister = this.resolveLogicalExpression(expression, options.forceImmutableMerges);
+            log(`LogicalExpression result is at ${this.TLMap[outputRegister]}`)
             break
         }
     }

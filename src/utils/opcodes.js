@@ -329,6 +329,14 @@ const implOpcode = {
         const dest = this.readByte(), src = this.readByte();
         this.write(dest, delete this.read(src));
     },
+    LOGICAL_AND: function () {
+        const dest = this.readByte(), left = this.readByte(), right = this.readByte();
+        this.write(dest, this.read(left) && this.read(right));
+    },
+    LOGICAL_OR: function () {
+        const dest = this.readByte(), left = this.readByte(), right = this.readByte();
+        this.write(dest, this.read(left) || this.read(right));
+    },
     GET_ITERATOR: function () {
         const dest = this.readByte(), src = this.readByte();
         this.write(dest, this.read(src)[Symbol.iterator]());

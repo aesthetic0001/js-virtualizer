@@ -17,6 +17,7 @@ const resolveWhileStatement = require("../transformations/WhileStatement");
 const resolveForOfStatement = require("../transformations/ForOfStatement");
 const resolveForInStatement = require("../transformations/ForInStatement");
 const resolveFunctionDeclaration = require("../transformations/FunctionDeclaration");
+const resolveLogicalExpression = require("../transformations/LogicalExpression");
 
 const TL_COUNT = 30
 
@@ -65,6 +66,7 @@ class FunctionBytecodeGenerator {
 
         this.resolveExpression = resolveExpression.bind(this)
         this.resolveBinaryExpression = resolveBinaryExpression.bind(this)
+        this.resolveLogicalExpression = resolveLogicalExpression.bind(this)
         this.resolveMemberExpression = resolveMemberExpression.bind(this)
         this.resolveCallExpression = resolveCallExpression.bind(this)
         this.resolveObjectExpression = resolveObjectExpression.bind(this)
@@ -263,7 +265,7 @@ class FunctionBytecodeGenerator {
                 switch (node.expression.type) {
                     case 'AssignmentExpression': {
                         const {left, right, operator} = node.expression;
-                        const leftRegister = this.getVariable(left.name);
+                        const leftRegister = this.resolveExpression(left).outputRegister
                         const rightRegister = this.resolveExpression(right).outputRegister
 
                         switch (operator) {
@@ -278,6 +280,7 @@ class FunctionBytecodeGenerator {
                                 this.chunk.append(new Opcode(opcode, leftRegister, leftRegister, rightRegister));
                             }
                         }
+                        if (needsCleanup(left)) this.freeTempLoad(leftRegister)
                         if (needsCleanup(right)) this.freeTempLoad(rightRegister)
                         break;
                     }
