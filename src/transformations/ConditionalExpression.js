@@ -35,12 +35,12 @@ function resolveConditionalExpression(node) {
     const endJumpOpcode = new Opcode('JUMP_UNCONDITIONAL', encodeDWORD(0))
     this.chunk.append(endJumpOpcode)
 
+    const alternateJumpDistance = this.chunk.getCurrentIP() - jumpIP
+    alternateJumpOpcode.modifyArgs(testResult, encodeDWORD(alternateJumpDistance))
+
     const alternateResult = this.resolveExpression(alternate).outputRegister
     this.chunk.append(new Opcode('SET_REF', outputRegister, alternateResult))
     if (needsCleanup(alternate)) this.freeTempLoad(alternateResult)
-
-    const alternateJumpDistance = this.chunk.getCurrentIP() - jumpIP
-    alternateJumpOpcode.modifyArgs(testResult, encodeDWORD(alternateJumpDistance))
 
     const endJumpDistance = this.chunk.getCurrentIP() - endJumpIP
     endJumpOpcode.modifyArgs(encodeDWORD(endJumpDistance))

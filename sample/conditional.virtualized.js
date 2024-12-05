@@ -1,12 +1,12 @@
 const JSVM = require('../src/vm');
 function evaluate() {
     const VM = new JSVM();
-    VM.loadFromString('eJylj7Fqw0AMhnW2CYYMcQRHnO2gBG8NGQolhgRaaJdO6hPc3xzt4MTEcbp4zpvkwfoYHcvZrSl0CVTDL4SkX58U1AwYg4juIq+Dyu425XbCZ8S+piBuNSEiNWScoQUjIuIQ6w9qQwt0Lu16WJSvE1l1u0HAvYOKvMPo2RXupXYb826Lo1um4CRjjlNw7vNQsIIC/TDdasn9sfnlbLr5L0nTk2TIm1DWn92bVwyZMY+91UMkRJQ8Vs7WrjL1m92ZxfWNhnjcrO1On9zh0LXKyrj90RamLr/H9Al/MdVvzBR86knuvwDaVUug', 'base64');
+    VM.loadFromString('eJylj79qw0AMxnU+UwqB/CkccSHDwdfgLaVDli4ZOnTx1ic4mqMZ3Jg4l7yb3yWD/BYFLeXs4ha6FKrhE0LSp58UaAnMQETrNOpV7fbb6n0uAdexpmTRaUFEaiQIMIwJEd1obJi6MAzTcreuy+ptzpd+N0lkcFBpdJi8+NK/Br+1Z1ee/GMGKXKRRQZpYx4xLlDfTGPDbTx2/3c20/yXpBlIcrSN5s1H/yYEvBSZRau7NP4+fa69C762Yef29mG1NuCIm3fd28Ifj32rqq0/nFxpQ/U1ZjR+Y6qfmBlEDyRPnzrtaM0=', 'base64');
     VM.loadDependencies({
-        62: console,
-        164: Math
+        116: Math,
+        220: console
     });
     VM.run();
-    return VM.registers[223];
+    return VM.registers[216];
 }
 evaluate();
