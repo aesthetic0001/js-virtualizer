@@ -2,7 +2,7 @@ const JSVM = require("../src/vm");
 
 // @virtualize
 function evaluate() {
-    const value1 = false ? Math.random() : 0.5
+    const value1 = false ? Math.random() : 1
     console.log("Selected value:", value1)
     const value2 = false ? value1 : Math.random()
     console.log("Selected value:", value2)
