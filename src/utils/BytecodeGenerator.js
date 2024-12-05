@@ -59,7 +59,7 @@ class FunctionBytecodeGenerator {
         }
         // like activeVariables but for functions
         // contains important information such as the IP of the function, register map for the arguments, dependencies, etc.
-        this.activeFunctions = {}
+        this.activeVFunctions = {}
         // for variables that are out of current scope but still accessible
         // ie. by functions
         this.dropDefers = {}
@@ -137,6 +137,26 @@ class FunctionBytecodeGenerator {
     deferDrop(register) {
         if (!this.dropDefers[register]) this.dropDefers[register] = 0
         this.dropDefers[register] += 1
+    }
+
+    releaseDefer(register) {
+        if (!this.dropDefers[register]) {
+            log(new LogData(`Attempted to release defer on register ${register} which is not deferred! Skipping`, 'warn', false))
+            return
+        }
+        this.dropDefers[register] -= 1
+        if (this.dropDefers[register] === 0) {
+            log(new LogData(`Register ${register} has no more dependencies and can be dropped`, 'accent', false))
+            this.removeRegister(register)
+        }
+    }
+
+    registerVFunction() {
+
+    }
+
+    releaseVFunction() {
+
     }
 
     randomRegister() {
@@ -245,7 +265,7 @@ class FunctionBytecodeGenerator {
                         switch (declaration.init.type) {
                             case 'ArrowFunctionExpression':
                             case 'FunctionDeclaration': {
-                                this.resolveFunctionDeclaration(declaration.init, {
+                                const {dependencies} = this.resolveFunctionDeclaration(declaration.init, {
                                     declareName: declaration.id.name
                                 })
                                 return;
@@ -262,6 +282,7 @@ class FunctionBytecodeGenerator {
                 }
                 break;
             }
+            case 'ArrowFunctionExpression':
             case 'FunctionDeclaration': {
                 const name = node.id.name
                 this.resolveFunctionDeclaration(node, {
@@ -277,11 +298,15 @@ class FunctionBytecodeGenerator {
                         const leftRegister = this.resolveExpression(left).outputRegister
                         let rightRegister
                         if (left.type === 'Identifier') {
+                            const name = left.name
+                            if (this.activeVFunctions[name]) {
+
+                            }
                             switch (right.type) {
                                 case 'ArrowFunctionExpression':
                                 case 'FunctionDeclaration': {
                                     this.resolveFunctionDeclaration(right, {
-                                        declareName: left.id.name
+                                        declareName: name
                                     })
                                     rightRegister = this.getVariable(left.name)
                                     break

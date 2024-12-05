@@ -7,10 +7,6 @@ function main() {
     const port = 3000;
 
     app.get('/', (req, res) => {
-        res.send('Hello World!')
-    })
-
-    app.get('/bottlesOfBeer', (req, res) => {
         const params = req.query
         let times = params.times
         if (!times) {

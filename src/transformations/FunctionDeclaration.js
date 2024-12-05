@@ -32,6 +32,11 @@ function resolveFunctionDeclaration(node, options) {
     this.handleNode(body)
 
     for (const register of this.vfuncReferences[this.vfuncReferences.length - 1]) {
+        // once the reference to this register is dropped, any references to itself will be dropped automatically
+        if (register === options.declareRegister) {
+            log(new LogData(`Skipping recursive call dependency ${outputRegister}`, 'accent', true))
+            continue
+        }
         dependencies.push(register)
         this.deferDrop(register)
     }

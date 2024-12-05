@@ -318,6 +318,10 @@ const cleanupNecessary = new Set([
     "UpdateExpression",
     "LogicalExpression",
     "ConditionalExpression",
+    // todo: these should be cleaned up procedurally: if it is anonymous, it should be cleaned up
+    // if it is named, then drop when the scope at which it is defined is dropped
+    // "ArrowFunctionExpression",
+    // "FunctionDeclaration",
     "Literal"
 ])
 

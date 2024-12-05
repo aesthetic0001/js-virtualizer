@@ -87,6 +87,11 @@ function resolveExpression(expression, options) {
             log(`ConditionalExpression result is at ${this.TLMap[outputRegister]}`)
             break
         }
+        case 'ArrowFunctionExpression': {
+            outputRegister = this.resolveFunctionDeclaration(expression).outputRegister
+            log(`ArrowFunctionExpression result is at ${this.TLMap[outputRegister]}`)
+            break
+        }
     }
 
     return {
