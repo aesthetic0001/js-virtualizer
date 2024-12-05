@@ -96,7 +96,7 @@ class FunctionBytecodeGenerator {
         }
         this.activeScopes[this.activeScopes.length - 1].push(variableName)
         this.activeVariables[variableName].push({
-            register,
+            register: register ?? this.randomRegister(),
             metadata: {
                 vfuncContext: this.getActiveLabel('vfunc') ?? 'outside_of_vfunc'
             }
@@ -251,7 +251,9 @@ class FunctionBytecodeGenerator {
             case 'FunctionDeclaration': {
                 const name = node.id.name
                 const {outputRegister} = this.resolveFunctionDeclaration(node)
-                this.declareVariable(name, outputRegister)
+                this.declareVariable(name)
+                this.chunk.append(new Opcode('SET_REF', this.getVariable(name), outputRegister))
+                this.freeTempLoad(outputRegister)
                 log(`FunctionDeclaration result is at ${outputRegister}`)
                 break
             }
