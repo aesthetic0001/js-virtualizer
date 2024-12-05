@@ -146,7 +146,7 @@ class FunctionBytecodeGenerator {
     getAvailableTempLoad() {
         for (const [register, available] of Object.entries(this.available)) {
             if (available) {
-                log(new LogData(`Allocating temp load register ${this.TLMap[register]}`, 'accent', false))
+                log(new LogData(`Allocating temp load register ${register}`, 'accent', false))
                 this.available[register] = false
                 return this[register]
             }
@@ -278,6 +278,7 @@ class FunctionBytecodeGenerator {
                                 this.chunk.append(new Opcode(opcode, leftRegister, leftRegister, rightRegister));
                             }
                         }
+                        if (needsCleanup(right)) this.freeTempLoad(rightRegister)
                         break;
                     }
                     default: {
