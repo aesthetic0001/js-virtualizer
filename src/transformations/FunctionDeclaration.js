@@ -13,16 +13,15 @@ function resolveFunctionDeclaration(node) {
 
     restoreRegisters.push(outputRegister)
 
+    const jumpOverIP = this.chunk.getCurrentIP()
     const jumpOver = new Opcode('JUMP_UNCONDITIONAL', encodeDWORD(0))
     this.chunk.append(jumpOver)
-    const startIP = this.chunk.getCurrentIP()
-
     for (const param of params) {
         this.declareVariable(param.name);
         argMap.push(this.getVariable(param.name))
     }
-
     this.enterVFuncContext(label)
+    const startIP = this.chunk.getCurrentIP()
     this.handleNode(body)
 
     for (const register of this.vfuncReferences[this.vfuncReferences.length - 1]) {
@@ -38,7 +37,7 @@ function resolveFunctionDeclaration(node) {
         const {type, computedOutput} = top.metadata
         switch (type) {
             case 'vfunc_return': {
-                log(new LogData(`Detected vfunc return at ${ip}!`, 'accent', true))
+                log(new LogData(`Detected vfunc return at ${computedOutput}!`, 'accent', true))
                 top.modifyArgs(outputRegister, computedOutput)
                 break
             }
@@ -49,9 +48,8 @@ function resolveFunctionDeclaration(node) {
         this.processStack.pop()
     }
 
-    jumpOver.modifyArgs(encodeDWORD(this.chunk.getCurrentIP() - startIP))
     this.exitVFuncContext()
-
+    jumpOver.modifyArgs(encodeDWORD(this.chunk.getCurrentIP() - jumpOverIP))
     this.chunk.append(new Opcode('VFUNC_SETUP_CALLBACK', encodeDWORD(startIP - this.chunk.getCurrentIP()),
         functionResult, outputRegister, encodeArrayRegisters(argMap), encodeArrayRegisters(restoreRegisters)))
     this.freeTempLoad(outputRegister)

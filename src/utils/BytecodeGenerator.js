@@ -91,13 +91,12 @@ class FunctionBytecodeGenerator {
     }
 
     declareVariable(variableName, register) {
-        if (this.activeVariables[variableName]) {
-            this.activeVariables[variableName].push(register || this.randomRegister())
-        } else {
-            this.activeVariables[variableName] = [register || this.randomRegister()]
+        if (!this.activeVariables[variableName]) {
+            this.activeVariables[variableName] = []
         }
-        this.activeScopes[this.activeScopes.length - 1].push({
-            variableName,
+        this.activeScopes[this.activeScopes.length - 1].push(variableName)
+        this.activeVariables[variableName].push({
+            register,
             metadata: {
                 vfuncContext: this.getActiveLabel('vfunc') ?? 'outside_of_vfunc'
             }
@@ -249,13 +248,13 @@ class FunctionBytecodeGenerator {
                 }
                 break;
             }
-            // case 'FunctionDeclaration': {
-            //     const name = node.id.name
-            //     const ip = this.resolveFunctionDeclaration(node)
-            //     this.declareVariable(name, ip)
-            //     log(`FunctionDeclaration result is at ${ip}`)
-            //     break
-            // }
+            case 'FunctionDeclaration': {
+                const name = node.id.name
+                const {outputRegister} = this.resolveFunctionDeclaration(node)
+                this.declareVariable(name, outputRegister)
+                log(`FunctionDeclaration result is at ${outputRegister}`)
+                break
+            }
             case 'ExpressionStatement': {
                 switch (node.expression.type) {
                     case 'AssignmentExpression': {

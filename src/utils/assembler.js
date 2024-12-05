@@ -1,4 +1,5 @@
 const {opcodes} = require("./constants");
+const {log} = require("./log");
 
 class Opcode {
     constructor(name, ...args) {
@@ -15,6 +16,7 @@ class Opcode {
     }
 
     modifyArgs(...args) {
+        log(`Modifying args for ${this.name} (${this.opcode.toString('hex')}) with ${args.length} arguments`)
         this.data = Buffer.concat(args.map((arg) => {
             if (Buffer.isBuffer(arg)) {
                 return arg;
