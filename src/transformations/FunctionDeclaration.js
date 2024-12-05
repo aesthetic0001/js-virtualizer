@@ -44,7 +44,9 @@ function resolveFunctionDeclaration(node) {
         }
         this.processStack.pop()
     }
-
+    // if it did not return before this point, we need to return nothing
+    this.chunk.append(new Opcode('SET_UNDEFINED', outputRegister))
+    this.chunk.append(new Opcode('END'))
     this.exitVFuncContext()
     jumpOver.modifyArgs(encodeDWORD(this.chunk.getCurrentIP() - jumpOverIP))
     this.chunk.append(new Opcode('VFUNC_SETUP_CALLBACK', encodeDWORD(startIP - this.chunk.getCurrentIP()),

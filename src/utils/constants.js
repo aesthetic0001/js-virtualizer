@@ -82,6 +82,10 @@ const opNames = [
     "GET_INDEX",
     // [external_ref, src]
     "WRITE_EXT",
+    // [dest]
+    "SET_NULL",
+    // [dest]
+    "SET_UNDEFINED",
 
     // comparison
     // [dest, left, right]

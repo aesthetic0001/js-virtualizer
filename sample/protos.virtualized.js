@@ -1,12 +1,9 @@
 const JSVM = require('../src/vm');
 function evaluate() {
     const VM = new JSVM();
-    VM.loadFromString('eJxj6mFgYGAQ1enhZ2BgsGK6x8DAwKiqo3OPBcRiK0rMS8nPFfd9d48DxGdg6gaT20CquH3vvbsn+viePe////9P9zxmYNJ5JyrdwwIykDknP1388e0eDhCHiQmi1xekiwVkgkBwak5qcklqikJZYk5pqpGVRM+9btV793w5EOYzMO0H2yLdzdgNk+Z+3HObKAs4HCEmww2W6LmnAzcBALSXRyo=', 'base64');
-    VM.loadDependencies({
-        219: console,
-        238: Math
-    });
+    VM.loadFromString('eJztjDEKAjEQRf/GFUIWEYtgCksl59hDeAYbwctsOYcwN5liiun3FFNFElBvYGX3efz3HANAVN4DuDoBMGRV6Wt7JpUL0YEAhFh0Hhve3B+3IwXx/e2sFVxtO4lpNqsTSZBTmXe11icXOA1x4ZHfcgnsucvS5dYf/DcEtzYyLTZYYrEsQlPh8E/8NJFY9PN9AZZnpLA=', 'base64');
+    VM.loadDependencies({ 10: console });
     VM.run();
-    return VM.registers[58];
+    return VM.registers[186];
 }
 evaluate();

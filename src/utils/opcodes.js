@@ -182,6 +182,14 @@ const implOpcode = {
         const ref = this.read(dest);
         ref.write(this.read(src));
     },
+    SET_NULL: function () {
+        const dest = this.readByte();
+        this.write(dest, null);
+    },
+    SET_UNDEFINED: function () {
+        const dest = this.readByte();
+        this.write(dest, undefined);
+    },
     SET_PROP: function () {
         const object = this.readByte(), prop = this.readByte(), src = this.readByte();
         const obj = this.read(object);
@@ -243,7 +251,6 @@ const implOpcode = {
     },
     ADD: function () {
         const dest = this.readByte(), left = this.readByte(), right = this.readByte();
-        console.log(`Adding ${this.read(left)} and ${this.read(right)} to ${dest}`)
         this.write(dest, this.read(left) + this.read(right));
     },
     SUBTRACT: function () {
