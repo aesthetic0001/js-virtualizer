@@ -317,6 +317,7 @@ const cleanupNecessary = new Set([
     "UnaryExpression",
     "UpdateExpression",
     "LogicalExpression",
+    "ConditionalExpression",
     "Literal"
 ])
 
