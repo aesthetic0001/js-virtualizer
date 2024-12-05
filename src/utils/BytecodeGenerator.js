@@ -19,7 +19,6 @@ const resolveForInStatement = require("../transformations/ForInStatement");
 const resolveFunctionDeclaration = require("../transformations/FunctionDeclaration");
 const resolveLogicalExpression = require("../transformations/LogicalExpression");
 const resolveConditionalExpression = require("../transformations/ConditionalExpression");
-const resolveArrowFunctionExpression = require("../transformations/ArrowFunctionExpression");
 
 const TL_COUNT = 30
 
@@ -77,7 +76,6 @@ class FunctionBytecodeGenerator {
         this.resolveUnaryExpression = resolveUnaryExpression.bind(this)
         this.resolveUpdateExpression = resolveUpdateExpression.bind(this)
         this.resolveConditionalExpression = resolveConditionalExpression.bind(this)
-        this.resolveArrowFunctionExpression = resolveArrowFunctionExpression.bind(this)
 
         this.resolveIfStatement = resolveIfStatement.bind(this)
         this.resolveForStatement = resolveForStatement.bind(this)
@@ -245,14 +243,9 @@ class FunctionBytecodeGenerator {
                     if (declaration.init) {
                         let out
                         switch (declaration.init.type) {
+                            case 'ArrowFunctionExpression':
                             case 'FunctionDeclaration': {
                                 this.resolveFunctionDeclaration(declaration.init, {
-                                    declareName: declaration.id.name
-                                })
-                                return;
-                            }
-                            case 'ArrowFunctionExpression': {
-                                this.resolveArrowFunctionExpression(declaration.init, {
                                     declareName: declaration.id.name
                                 })
                                 return;
@@ -285,15 +278,9 @@ class FunctionBytecodeGenerator {
                         let rightRegister
                         if (left.type === 'Identifier') {
                             switch (right.type) {
+                                case 'ArrowFunctionExpression':
                                 case 'FunctionDeclaration': {
                                     this.resolveFunctionDeclaration(right, {
-                                        declareName: left.id.name
-                                    })
-                                    rightRegister = this.getVariable(left.name)
-                                    break
-                                }
-                                case 'ArrowFunctionExpression': {
-                                    this.resolveArrowFunctionExpression(right, {
                                         declareName: left.id.name
                                     })
                                     rightRegister = this.getVariable(left.name)

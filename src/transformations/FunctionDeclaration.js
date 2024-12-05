@@ -4,7 +4,7 @@ const {log, LogData} = require("../utils/log");
 // always returns a MUTABLE register, ownership is transferred to the caller
 function resolveFunctionDeclaration(node, options) {
     options = options || {}
-    options.declareName = options.declareName ?? null
+    options.declareName = options.declareName ?? `anonymous_${this.generateOpcodeLabel()}`
     options.declareRegister = options.declareRegister ?? this.randomRegister()
 
     if (options.declareName) {
@@ -65,7 +65,8 @@ function resolveFunctionDeclaration(node, options) {
 
     return {
         outputRegister: options.declareRegister,
-        dependencies
+        dependencies,
+        name: options.declareName
     }
 }
 
