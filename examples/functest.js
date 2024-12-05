@@ -1,3 +1,14 @@
-const toStringify = 123
-console.log(toStringify.toString)
-// console.log(toStringify.toString.apply(toStringify, []))
+function a() {
+    console.log("ORIGINAL")
+}
+
+let b = a
+
+a = () => {
+    console.log("MODIFIED")
+}
+
+console.log("Calling b")
+b()
+console.log("Calling a")
+a()

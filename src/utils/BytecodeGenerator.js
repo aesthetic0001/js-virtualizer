@@ -151,12 +151,29 @@ class FunctionBytecodeGenerator {
         }
     }
 
-    registerVFunction() {
-
+    registerVFunction(name, metadata) {
+        const register = this.getVariable(name)
+        if (this.activeVFunctions[register]) {
+            log(new LogData(`Function ${name} already registered at register ${register}! Overwriting`, 'warn', false))
+            this.releaseVFunction(name)
+        }
+        this.activeVFunctions[register] = {
+            name,
+            metadata
+        }
     }
 
-    releaseVFunction() {
-
+    releaseVFunction(name) {
+        const register = this.getVariable(name)
+        if (!this.activeVFunctions[register]) {
+            log(new LogData(`Attempted to release a non-existant vfunction ${name} at register ${register}! Skipping`, 'warn', false))
+            return
+        }
+        const activeVFunction = this.activeVFunctions[register]
+        for (const borrowed of activeVFunction.metadata.dependencies) {
+            this.releaseDefer(borrowed)
+        }
+        delete this.activeVFunctions[register]
     }
 
     randomRegister() {
