@@ -85,8 +85,15 @@ const implOpcode = {
             dest = this.readByte(),
             returnDataStore = this.readByte(),
             argArrayMapper = this.readArrayRegisters();
-        const restoreRegisters = this.readArrayRegisters();
-        restoreRegisters.push(registers.INSTRUCTION_POINTER);
+        // we have to specify mutable registers, because it could lead to undefined behavior
+        // the mutability rules that applied when the function was set up by the transpiler are not guaranteed to be the same
+        // ie. it may accidentally overwrite a register that WAS available during compilation but is now being used by the transpiler
+        // somewhere else
+        // if we only allow variables captured by reference to be mutable, this should avoid the issue
+        // variables will always exist at a known, fixed location (until, of course, the scope changes), however temp loader
+        // registers are more volatile and often reused
+
+        const mutableRegisters = this.readArrayRegisters();
 
         function cb(...args) {
             this.regstack.push([this.registers.slice(), returnDataStore]);
@@ -97,7 +104,10 @@ const implOpcode = {
             this.run()
             const res = this.read(returnDataStore);
             const [oldRegisters] = this.regstack.pop();
-            for (const restoreRegister of restoreRegisters) this.registers[restoreRegister] = oldRegisters[restoreRegister];
+            this.registers = oldRegisters;
+            for (const mutableRegister of mutableRegisters) {
+                this.registers[mutableRegister] = oldRegisters[mutableRegister];
+            }
             log(`Callback result: ${res}`)
             return res
         }
@@ -232,6 +242,7 @@ const implOpcode = {
     },
     ADD: function () {
         const dest = this.readByte(), left = this.readByte(), right = this.readByte();
+        console.log(`Adding ${this.read(left)} and ${this.read(right)} to ${dest}`)
         this.write(dest, this.read(left) + this.read(right));
     },
     SUBTRACT: function () {

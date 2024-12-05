@@ -22,7 +22,9 @@ function resolveCallExpression(node) {
     this.chunk.append(new Opcode('LOAD_DWORD', counterRegister, encodeDWORD(0)));
     this.chunk.append(new Opcode('LOAD_DWORD', oneRegister, encodeDWORD(1)));
 
-    log(`Allocated array for arguments at ${this.TLMap[argsRegister]} (${argsRegister}) with size ${arguments.length}`)
+    log(`Arguments allocated at ${this.TLMap[argsRegister]} (${argsRegister}) with size ${arguments.length}`)
+    log(`Counter register is at ${this.TLMap[counterRegister]} (${counterRegister})`)
+    log(`One register is at ${this.TLMap[oneRegister]} (${oneRegister})`)
 
     arguments.forEach((arg, index) => {
         const valueRegister = this.resolveExpression(arg).outputRegister

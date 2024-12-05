@@ -163,6 +163,7 @@ class FunctionBytecodeGenerator {
             log(new LogData(`Attempted to free non-tempload register ${register}! Skipping`, 'warn', false))
             return
         }
+        log(new LogData(`Freeing temp load register ${this.TLMap[register]} (${register})`, 'accent', false))
         this.available[this.TLMap[register]] = true
     }
 

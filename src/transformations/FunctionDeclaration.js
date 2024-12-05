@@ -51,7 +51,7 @@ function resolveFunctionDeclaration(node) {
     this.exitVFuncContext()
     jumpOver.modifyArgs(encodeDWORD(this.chunk.getCurrentIP() - jumpOverIP))
     this.chunk.append(new Opcode('VFUNC_SETUP_CALLBACK', encodeDWORD(startIP - this.chunk.getCurrentIP()),
-        functionResult, outputRegister, encodeArrayRegisters(argMap), encodeArrayRegisters(restoreRegisters)))
+        functionResult, outputRegister, encodeArrayRegisters(argMap), encodeArrayRegisters(dependencies)))
     this.freeTempLoad(outputRegister)
 
     return {
