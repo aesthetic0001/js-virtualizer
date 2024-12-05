@@ -95,9 +95,11 @@ const implOpcode = {
             }
             this.registers[registers.INSTRUCTION_POINTER] = cur + fnOffset - 1;
             this.run()
+            const res = this.read(returnDataStore);
             const [oldRegisters] = this.regstack.pop();
             for (const restoreRegister of restoreRegisters) this.registers[restoreRegister] = oldRegisters[restoreRegister];
-            return this.read(returnDataStore);
+            log(`Callback result: ${res}`)
+            return res
         }
 
         this.write(dest, cb.bind(this));
