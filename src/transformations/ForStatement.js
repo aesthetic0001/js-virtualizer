@@ -51,6 +51,9 @@ function resolveForStatement(node) {
                 top.modifyArgs(encodeDWORD(continueGoto - ip))
                 break
             }
+            default: {
+                throw new Error(`Unknown loop control type: ${type}`)
+            }
         }
         this.processStack.pop()
     }

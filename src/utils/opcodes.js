@@ -85,17 +85,21 @@ const implOpcode = {
             dest = this.readByte(),
             returnDataStore = this.readByte(),
             argArrayMapper = this.readArrayRegisters();
-        const write = this.write
-        const read = this.read
+        const restoreRegisters = this.readArrayRegisters();
+        restoreRegisters.push(registers.INSTRUCTION_POINTER);
+
         function cb(...args) {
             this.regstack.push([this.registers.slice(), returnDataStore]);
             for (let i = 0; i < args.length; i++) {
-                write(argArrayMapper[i], args[i]);
+                this.write(argArrayMapper[i], args[i]);
             }
             this.registers[registers.INSTRUCTION_POINTER] = cur + fnOffset - 1;
             this.run()
-            return read(returnDataStore);
+            const [oldRegisters] = this.regstack.pop();
+            for (const restoreRegister of restoreRegisters) this.registers[restoreRegister] = oldRegisters[restoreRegister];
+            return this.read(returnDataStore);
         }
+
         this.write(dest, cb.bind(this));
     },
     VFUNC_RETURN: function () {

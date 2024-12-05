@@ -61,6 +61,7 @@ class FunctionBytecodeGenerator {
         // for variables that are out of current scope but still accessible
         // ie. by functions
         this.dropDefers = {}
+        this.vfuncReferences = []
 
         this.resolveExpression = resolveExpression.bind(this)
         this.resolveBinaryExpression = resolveBinaryExpression.bind(this)
@@ -85,7 +86,7 @@ class FunctionBytecodeGenerator {
             log(new LogData(`Attempted to drop variable ${variableName} which is not in scope! Skipping`, 'warn', false))
             return
         }
-        const register = this.activeVariables[variableName].pop()
+        const {register} = this.activeVariables[variableName].pop()
         this.removeRegister(register)
     }
 
@@ -95,7 +96,12 @@ class FunctionBytecodeGenerator {
         } else {
             this.activeVariables[variableName] = [register || this.randomRegister()]
         }
-        this.activeScopes[this.activeScopes.length - 1].push(variableName)
+        this.activeScopes[this.activeScopes.length - 1].push({
+            variableName,
+            metadata: {
+                vfuncContext: this.getActiveLabel('vfunc') ?? 'outside_of_vfunc'
+            }
+        })
     }
 
     getVariable(variableName) {
@@ -105,11 +111,15 @@ class FunctionBytecodeGenerator {
             log(new LogData(`Variable ${variableName} not found in scope!`, 'error', false))
             throw new Error(`Variable ${variableName} not found in scope!`)
         }
+        const {register, metadata} = scopeArray[scopeArray.length - 1]
         if (this.getActiveLabel('vfunc')) {
             const accessContext = this.getActiveLabel('vfunc')
-            const declaredContext =
+            if (metadata.vfuncContext !== accessContext) {
+                log(new LogData(`VFunc capturing variable ${variableName} by reference! Current Context: ${accessContext}, Variable Context: ${metadata.vfuncContext}`, 'warn', false))
+                this.vfuncReferences[this.vfuncReferences.length - 1].add(variableName)
+            }
         }
-        return scopeArray[scopeArray.length - 1]
+        return register
     }
 
     removeRegister(register) {
@@ -165,6 +175,16 @@ class FunctionBytecodeGenerator {
                 return label
             }
         }
+    }
+
+    enterVFuncContext(label) {
+        this.contextLabels.vfunc.push(label)
+        this.vfuncReferences.push(new Set())
+    }
+
+    exitVFuncContext() {
+        this.contextLabels.vfunc.pop()
+        this.vfuncReferences.pop()
     }
 
     enterContext(type, label) {
@@ -287,7 +307,18 @@ class FunctionBytecodeGenerator {
             }
             case 'ReturnStatement': {
                 const out = this.resolveExpression(node.argument).outputRegister
-                this.chunk.append(new Opcode('SET_REF', this.outputRegister, out));
+                if (this.getActiveLabel('vfunc')) {
+                    const opcode = new Opcode('SET_REF', 0, out)
+                    opcode.markForProcessing(this.getActiveLabel('vfunc'), {
+                        type: 'vfunc_return',
+                        computedOutput: out
+                    })
+                    this.processStack.push(opcode)
+                    this.chunk.append(opcode)
+                    this.chunk.append(new Opcode('END'))
+                } else {
+                    this.chunk.append(new Opcode('SET_REF', this.outputRegister, out));
+                }
                 if (needsCleanup(node.argument)) this.freeTempLoad(out)
             }
         }

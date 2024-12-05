@@ -1,10 +1,11 @@
 const {Opcode, encodeDWORD, encodeArrayRegisters} = require("../utils/assembler");
+const {log, LogData} = require("../utils/log");
 
-// always returns a MUTABLE register which contains the
+// always returns a MUTABLE register, ownership is transferred to the caller
 function resolveFunctionDeclaration(node) {
-    const {id, params, body} = node;
+    const {params, body} = node;
     const label = this.generateOpcodeLabel()
-    const functionResult = this.getVariable(id.name) ?? this.getAvailableTempLoad()
+    const functionResult = this.getAvailableTempLoad()
     const outputRegister = this.getAvailableTempLoad()
     const argMap = []
     const restoreRegisters = []
@@ -21,25 +22,44 @@ function resolveFunctionDeclaration(node) {
         argMap.push(this.getVariable(param.name))
     }
 
-    this.enterContext('vfunc', label)
+    this.enterVFuncContext(label)
     this.handleNode(body)
-    this.chunk.append(new Opcode('VFUNC_RETURN', outputRegister, encodeArrayRegisters(restoreRegisters)))
-    jumpOver.modifyArgs(encodeDWORD(this.chunk.getCurrentIP() - startIP))
-    this.exitContext('vfunc')
 
-    this.chunk.append(new Opcode('VFUNC_SETUP_CALLBACK', encodeDWORD(startIP - this.chunk.getCurrentIP()), functionResult, outputRegister, encodeArrayRegisters(argMap)))
-
-    if (!this.activeFunctions[functionResult]) {
-        this.activeFunctions[functionResult] = []
+    for (const register of this.vfuncReferences[this.vfuncReferences.length - 1]) {
+        dependencies.push(register)
+        this.deferDrop(register)
     }
 
-    // so we can drop dependencies after function is no longer active
-    this.activeFunctions[functionResult].push({
-        dependencies
-    })
+    while (this.processStack.length) {
+        const top = this.processStack[this.processStack.length - 1]
+        if (top.label !== label) {
+            break
+        }
+        const {type, computedOutput} = top.metadata
+        switch (type) {
+            case 'vfunc_return': {
+                log(new LogData(`Detected vfunc return at ${ip}!`, 'accent', true))
+                top.modifyArgs(outputRegister, computedOutput)
+                break
+            }
+            default: {
+                throw new Error(`Unknown vfunc process: ${type}`)
+            }
+        }
+        this.processStack.pop()
+    }
 
+    jumpOver.modifyArgs(encodeDWORD(this.chunk.getCurrentIP() - startIP))
+    this.exitVFuncContext()
+
+    this.chunk.append(new Opcode('VFUNC_SETUP_CALLBACK', encodeDWORD(startIP - this.chunk.getCurrentIP()),
+        functionResult, outputRegister, encodeArrayRegisters(argMap), encodeArrayRegisters(restoreRegisters)))
     this.freeTempLoad(outputRegister)
-    return functionResult
+
+    return {
+        outputRegister: functionResult,
+        dependencies
+    }
 }
 
 module.exports = resolveFunctionDeclaration
