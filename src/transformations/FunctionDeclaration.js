@@ -2,10 +2,20 @@ const {Opcode, encodeDWORD, encodeArrayRegisters} = require("../utils/assembler"
 const {log, LogData} = require("../utils/log");
 
 // always returns a MUTABLE register, ownership is transferred to the caller
-function resolveFunctionDeclaration(node) {
+function resolveFunctionDeclaration(node, options) {
+    options = options || {}
+    options.declareName = options.declareName ?? null
+    options.declareRegister = options.declareRegister ?? this.randomRegister()
+
+    if (options.declareName) {
+        log(new LogData(`Declaring function ${options.declareName} at register ${options.declareRegister}`, 'accent', true))
+        this.declareVariable(options.declareName, options.declareRegister)
+    } else {
+        log(new LogData(`Declaring anonymous function at register ${options.declareRegister}`, 'accent', true))
+    }
+
     const {params, body} = node;
     const label = this.generateOpcodeLabel()
-    const functionResult = this.getAvailableTempLoad()
     const outputRegister = this.getAvailableTempLoad()
     const argMap = []
     const dependencies = []
@@ -50,11 +60,11 @@ function resolveFunctionDeclaration(node) {
     this.exitVFuncContext()
     jumpOver.modifyArgs(encodeDWORD(this.chunk.getCurrentIP() - jumpOverIP))
     this.chunk.append(new Opcode('VFUNC_SETUP_CALLBACK', encodeDWORD(startIP - this.chunk.getCurrentIP()),
-        functionResult, outputRegister, encodeArrayRegisters(argMap), encodeArrayRegisters(dependencies)))
+        options.declareRegister, outputRegister, encodeArrayRegisters(argMap), encodeArrayRegisters(dependencies)))
     this.freeTempLoad(outputRegister)
 
     return {
-        outputRegister: functionResult,
+        outputRegister: options.declareRegister,
         dependencies
     }
 }

@@ -97,6 +97,7 @@ class FunctionBytecodeGenerator {
     }
 
     declareVariable(variableName, register) {
+        log(new LogData(`Declaring variable ${variableName} at register ${register ?? 'random'}`, 'accent', false))
         if (!this.activeVariables[variableName]) {
             this.activeVariables[variableName] = []
         }
@@ -241,19 +242,27 @@ class FunctionBytecodeGenerator {
             }
             case 'VariableDeclaration': {
                 for (const declaration of node.declarations) {
-                    this.declareVariable(declaration.id.name, this.randomRegister());
                     if (declaration.init) {
                         let out
                         switch (declaration.init.type) {
                             case 'FunctionDeclaration': {
-                                out = this.resolveFunctionDeclaration(declaration.init).outputRegister
-                                break
+                                this.resolveFunctionDeclaration(declaration.init, {
+                                    declareName: declaration.id.name
+                                })
+                                return;
+                            }
+                            case 'ArrowFunctionExpression': {
+                                this.resolveArrowFunctionExpression(declaration.init, {
+                                    declareName: declaration.id.name
+                                })
+                                return;
                             }
                             default: {
                                 out = this.resolveExpression(declaration.init).outputRegister
                                 if (needsCleanup(declaration.init)) this.freeTempLoad(out)
                             }
                         }
+                        this.declareVariable(declaration.id.name, this.randomRegister());
                         this.chunk.append(new Opcode('SET_REF', this.getVariable(declaration.id.name), out));
                         if (needsCleanup(declaration.init)) this.freeTempLoad(out)
                     }
@@ -262,11 +271,10 @@ class FunctionBytecodeGenerator {
             }
             case 'FunctionDeclaration': {
                 const name = node.id.name
-                const {outputRegister} = this.resolveFunctionDeclaration(node)
-                this.declareVariable(name)
-                this.chunk.append(new Opcode('SET_REF', this.getVariable(name), outputRegister))
-                this.freeTempLoad(outputRegister)
-                log(`FunctionDeclaration result is at ${outputRegister}`)
+                this.resolveFunctionDeclaration(node, {
+                    declareName: name
+                })
+                log(`FunctionDeclaration result is at ${this.getVariable(name)}`)
                 break
             }
             case 'ExpressionStatement': {
@@ -274,7 +282,27 @@ class FunctionBytecodeGenerator {
                     case 'AssignmentExpression': {
                         const {left, right, operator} = node.expression;
                         const leftRegister = this.resolveExpression(left).outputRegister
-                        const rightRegister = this.resolveExpression(right).outputRegister
+                        let rightRegister
+                        if (left.type === 'Identifier') {
+                            switch (right.type) {
+                                case 'FunctionDeclaration': {
+                                    this.resolveFunctionDeclaration(right, {
+                                        declareName: left.id.name
+                                    })
+                                    rightRegister = this.getVariable(left.name)
+                                    break
+                                }
+                                case 'ArrowFunctionExpression': {
+                                    this.resolveArrowFunctionExpression(right, {
+                                        declareName: left.id.name
+                                    })
+                                    rightRegister = this.getVariable(left.name)
+                                    break
+                                }
+                            }
+                        }
+
+                        if (!rightRegister) rightRegister = this.resolveExpression(right).outputRegister
 
                         switch (operator) {
                             case '=': {
@@ -351,6 +379,7 @@ class FunctionBytecodeGenerator {
         }
         // discard all variables in the current scope
         for (const variableName of this.activeScopes.pop()) {
+            log(new LogData(`Dropping variable ${variableName}`, 'accent', false))
             this.dropVariable(variableName)
         }
     }
