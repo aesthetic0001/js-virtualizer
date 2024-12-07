@@ -38,7 +38,6 @@ function resolveFunctionDeclaration(node, options) {
             continue
         }
         dependencies.push(register)
-        this.deferDrop(register)
     }
 
     while (this.processStack.length) {

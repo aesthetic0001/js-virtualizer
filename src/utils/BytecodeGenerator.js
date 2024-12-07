@@ -45,10 +45,10 @@ class FunctionBytecodeGenerator {
         // for variable contexts
         // variables declared by the scope, array of array of variable names
         // 0th element is the global scope, subsequent elements are nested scopes
-        this.activeScopes = [[]]
+        this.activeVariableNames = [[]]
         // variables that are currently in the active scope, map of variable name to array of registers,
         // where the last element is the most recent register (active reference)
-        this.activeVariables = {}
+        this.activeVariableRegisters = {}
         this.takenLabels = new Set()
         // labels that need to be resolved
         this.processStack = []
@@ -57,13 +57,14 @@ class FunctionBytecodeGenerator {
             loops: [],
             vfunc: []
         }
-        // like activeVariables but for functions
+        // like activeVariableRegisters but for functions
         // contains important information such as the IP of the function, register map for the arguments, dependencies, etc.
         this.activeVFunctions = {}
-        // for variables that are out of current scope but still accessible
-        // ie. by functions
-        this.dropDefers = {}
         this.vfuncReferences = []
+
+        // inbound and outbound for the current context
+        this.inbound = [{}]
+        this.outbound = [{}]
 
         this.resolveExpression = resolveExpression.bind(this)
         this.resolveBinaryExpression = resolveBinaryExpression.bind(this)
@@ -85,32 +86,25 @@ class FunctionBytecodeGenerator {
         this.resolveFunctionDeclaration = resolveFunctionDeclaration.bind(this)
     }
 
-    dropVariable(variableName) {
-        if (!this.activeVariables[variableName]) {
-            log(new LogData(`Attempted to drop variable ${variableName} which is not in scope! Skipping`, 'warn', false))
-            return
-        }
-        const {register} = this.activeVariables[variableName].pop()
-        this.removeRegister(register)
-    }
-
-    declareVariable(variableName, register) {
+    declareVariable(variableName, register, type) {
         log(new LogData(`Declaring variable ${variableName} at register ${register ?? 'random'}`, 'accent', false))
-        if (!this.activeVariables[variableName]) {
-            this.activeVariables[variableName] = []
-        }
-        this.activeScopes[this.activeScopes.length - 1].push(variableName)
-        this.activeVariables[variableName].push({
+        if (!this.activeVariableRegisters[variableName]) this.activeVariableRegisters[variableName] = []
+        this.getCurrentScope().variables.push(variableName)
+        this.activeVariableRegisters[variableName].push({
             register: register ?? this.randomRegister(),
             metadata: {
-                vfuncContext: this.getActiveLabel('vfunc') ?? 'outside_of_vfunc'
+                vfuncContext: this.getActiveLabel('vfunc') ?? 'outside_of_vfunc',
+                // cloned_literal, reference, function
+                type: type ?? 'cloned_literal',
+                // register that this variable points to if it is a reference
+                pointsTo: null
             }
         })
     }
 
     getVariable(variableName) {
         log(`Getting variable ${variableName}`)
-        const scopeArray = this.activeVariables[variableName]
+        const scopeArray = this.activeVariableRegisters[variableName]
         if (!scopeArray) {
             log(new LogData(`Variable ${variableName} not found in scope!`, 'error', false))
             throw new Error(`Variable ${variableName} not found in scope!`)
@@ -126,54 +120,60 @@ class FunctionBytecodeGenerator {
         return register
     }
 
-    removeRegister(register) {
-        if (this.dropDefers[register] && this.dropDefers[register] > 0) {
-            log(new LogData(`Prohibiting dropping of required register ${register}`, 'warn'))
+    setMetadata(variableName, metadata) {
+        const scopeArray = this.activeVariableRegisters[variableName]
+        if (!scopeArray) {
+            log(new LogData(`Variable ${variableName} not found in scope!`, 'error', false))
+            throw new Error(`Variable ${variableName} not found in scope!`)
+        }
+        scopeArray[scopeArray.length - 1].metadata = {
+            ...scopeArray[scopeArray.length - 1].metadata,
+            ...metadata
+        }
+    }
+
+    getMetadata(variableName) {
+        const scopeArray = this.activeVariableRegisters[variableName]
+        if (!scopeArray) {
+            log(new LogData(`Variable ${variableName} not found in scope!`, 'error', false))
+            throw new Error(`Variable ${variableName} not found in scope!`)
+        }
+        return scopeArray[scopeArray.length - 1].metadata
+    }
+
+    getCurrentScope() {
+        return {
+            variables: this.activeVariableNames[this.activeVariableNames.length - 1],
+            inbound: this.inbound[this.inbound.length - 1],
+            outbound: this.outbound[this.outbound.length - 1]
+        }
+    }
+
+    addDependency(self, variable) {
+        if (!this.inbound[self]) {
+            this.inbound[self] = []
+        }
+        if (!this.outbound[variable]) {
+            this.outbound[variable] = []
+        }
+        this.inbound[self].add(variable)
+        this.outbound[variable].add(self)
+    }
+
+    discardVariable(register) {
+        if (!this.outbound[register]) {
+            log(new LogData(`Attempted to remove dependency for register ${register} which does not exist! Skipping`, 'warn', false))
             return
         }
-        this.reservedRegisters.delete(register);
-    }
-
-    deferDrop(register) {
-        if (!this.dropDefers[register]) this.dropDefers[register] = 0
-        this.dropDefers[register] += 1
-    }
-
-    releaseDefer(register) {
-        if (!this.dropDefers[register]) {
-            log(new LogData(`Attempted to release defer on register ${register} which is not deferred! Skipping`, 'warn', false))
-            return
+        for (const outbound of this.outbound[register]) {
+            this.inbound[outbound].delete(register)
+            if (this.inbound[outbound].size === 0) {
+                this.discardVariable(outbound)
+            }
         }
-        this.dropDefers[register] -= 1
-        if (this.dropDefers[register] === 0) {
-            log(new LogData(`Register ${register} has no more dependencies and can be dropped`, 'accent', false))
-            this.removeRegister(register)
+        if (this.inbound[register].size === 0) {
+            delete this.outbound[register]
         }
-    }
-
-    registerVFunction(name, metadata) {
-        const register = this.getVariable(name)
-        if (this.activeVFunctions[register]) {
-            log(new LogData(`Function ${name} already registered at register ${register}! Overwriting`, 'warn', false))
-            this.releaseVFunction(name)
-        }
-        this.activeVFunctions[register] = {
-            name,
-            metadata
-        }
-    }
-
-    releaseVFunction(name) {
-        const register = this.getVariable(name)
-        if (!this.activeVFunctions[register]) {
-            log(new LogData(`Attempted to release a non-existant vfunction ${name} at register ${register}! Skipping`, 'warn', false))
-            return
-        }
-        const activeVFunction = this.activeVFunctions[register]
-        for (const borrowed of activeVFunction.metadata.dependencies) {
-            this.releaseDefer(borrowed)
-        }
-        delete this.activeVFunctions[register]
     }
 
     randomRegister() {
@@ -401,16 +401,22 @@ class FunctionBytecodeGenerator {
         block = block ?? this.ast
         options = options ?? {}
 
-        this.activeScopes.push([])
+        this.activeVariableNames.push([])
+        this.inbound.push({})
+        this.outbound.push({})
+
         // perform a DFS on the block
         for (const node of block) {
             this.handleNode(node, options)
         }
         // discard all variables in the current scope
-        for (const variableName of this.activeScopes.pop()) {
+        for (const variableName of this.activeVariableNames.pop()) {
             log(new LogData(`Dropping variable ${variableName}`, 'accent', false))
-            this.dropVariable(variableName)
+            this.discardVariable(variableName)
         }
+
+        this.inbound.pop()
+        this.outbound.pop()
     }
 
     getBytecode() {
