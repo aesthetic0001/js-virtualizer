@@ -297,6 +297,20 @@ const implOpcode = {
         const dest = this.readByte(), src = this.readByte(), shift = this.readByte();
         this.write(dest, this.read(src) >> this.read(shift));
     },
+    SPREAD: function () {
+        const dest = this.readByte(), src = this.readByte();
+        this.write(dest, ...this.read(src));
+    },
+    SPREAD_INTO: function () {
+        const dest = this.readByte(), src = this.readByte()
+        if (this.read(dest) instanceof Array) {
+            this.write(dest, [...this.read(dest), ...this.read(src)]);
+        } else if (this.read(dest) instanceof Object) {
+            this.write(dest, {...this.read(dest), ...this.read(src)});
+        } else {
+            throw new Error("Cannot spread into non-object or non-array");
+        }
+    },
     NOT: function () {
         const dest = this.readByte(), src = this.readByte();
         this.write(dest, !this.read(src));

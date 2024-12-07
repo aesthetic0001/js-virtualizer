@@ -6,22 +6,26 @@ const {needsCleanup} = require("../utils/constants");
 function resolveObjectExpression(node) {
     const {properties} = node
 
-    log(`Resolving object expression: ${properties.map(kv => `${kv.key.type}: ${kv.value.type}`).join(', ')}`)
+    log(`Resolving object expression: ${properties.map(kv => `${kv.type === "SpreadElement" ? `...${kv.argument.type}` : `${kv.key.type}: ${kv.value.type}`}`).join(', ')}`)
 
     const objectRegister = this.getAvailableTempLoad()
 
     this.chunk.append(new Opcode('SETUP_OBJECT', objectRegister));
 
     properties.forEach((kvPair) => {
-        const {computed, key, value} = kvPair
-        const keyRegister = this.resolveExpression(key, {computed}).outputRegister,
-            valueRegister = this.resolveExpression(value).outputRegister
+        if (kvPair.type === 'SpreadElement') {
+            this.resolveSpreadElement(kvPair, objectRegister)
+        } else {
+            const {computed, key, value} = kvPair
+            const keyRegister = this.resolveExpression(key, {computed}).outputRegister,
+                valueRegister = this.resolveExpression(value).outputRegister
 
-        log(`Resolving object property: ${key.type} ${computed ? 'computed' : 'non-computed'}`)
+            log(`Resolving object property: ${key.type} ${computed ? 'computed' : 'non-computed'}`)
 
-        this.chunk.append(new Opcode('SET_PROP', objectRegister, keyRegister, valueRegister));
-        if (needsCleanup(key) || !computed) this.freeTempLoad(keyRegister)
-        if (needsCleanup(value)) this.freeTempLoad(valueRegister)
+            this.chunk.append(new Opcode('SET_PROP', objectRegister, keyRegister, valueRegister));
+            if (needsCleanup(key) || !computed) this.freeTempLoad(keyRegister)
+            if (needsCleanup(value)) this.freeTempLoad(valueRegister)
+        }
     })
 
     return objectRegister

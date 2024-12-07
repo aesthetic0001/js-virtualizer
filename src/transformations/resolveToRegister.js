@@ -98,6 +98,11 @@ function resolveExpression(expression, options) {
             log(`TemplateLiteral result is at ${this.TLMap[outputRegister]}`)
             break
         }
+        case 'SpreadElement': {
+            outputRegister = this.resolveSpreadElement(expression)
+            log(`SpreadElement result is at ${this.TLMap[outputRegister]}`)
+            break
+        }
     }
 
     return {

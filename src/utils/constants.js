@@ -139,6 +139,10 @@ const opNames = [
 
     // other unary
     // [dest, src]
+    "SPREAD",
+    // [dest, src]
+    "SPREAD_INTO",
+    // [dest, src]
     "NOT",
     // [dest, src]
     "NEGATE",
@@ -322,6 +326,7 @@ const cleanupNecessary = new Set([
     // if it is named, then drop when the scope at which it is defined is dropped
     // "ArrowFunctionExpression",
     // "FunctionDeclaration",
+    "SpreadElement",
     "TemplateLiteral",
     "Literal"
 ])

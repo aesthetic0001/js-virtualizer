@@ -20,6 +20,7 @@ const resolveFunctionDeclaration = require("../transformations/FunctionDeclarati
 const resolveLogicalExpression = require("../transformations/LogicalExpression");
 const resolveConditionalExpression = require("../transformations/ConditionalExpression");
 const resolveTemplateLiteral = require("../transformations/TemplateLiteral");
+const resolveSpreadElement = require("../transformations/SpreadElement");
 
 const TL_COUNT = 30
 
@@ -78,6 +79,7 @@ class FunctionBytecodeGenerator {
         this.resolveUpdateExpression = resolveUpdateExpression.bind(this)
         this.resolveConditionalExpression = resolveConditionalExpression.bind(this)
         this.resolveTemplateLiteral = resolveTemplateLiteral.bind(this)
+        this.resolveSpreadElement = resolveSpreadElement.bind(this)
 
         this.resolveIfStatement = resolveIfStatement.bind(this)
         this.resolveForStatement = resolveForStatement.bind(this)
@@ -97,7 +99,7 @@ class FunctionBytecodeGenerator {
     }
 
     declareVariable(variableName, register) {
-        log(new LogData(`Declaring variable ${variableName} at register ${register ?? 'random'}`, 'accent', false))
+        log(new LogData(`Declaring variable ${variableName} at register ${register ?? 'random'}`, 'accent'))
         if (!this.activeVariables[variableName]) {
             this.activeVariables[variableName] = []
         }
@@ -190,7 +192,7 @@ class FunctionBytecodeGenerator {
     getAvailableTempLoad() {
         for (const [register, available] of Object.entries(this.available)) {
             if (available) {
-                log(new LogData(`Allocating temp load register ${register}`, 'accent', false))
+                log(new LogData(`Allocating temp load register ${register}`, 'accent'))
                 this.available[register] = false
                 return this[register]
             }
@@ -201,14 +203,14 @@ class FunctionBytecodeGenerator {
     // remember to free the tempload after using it
     freeTempLoad(register) {
         if (this.available[this.TLMap[register]]) {
-            log(new LogData(`Attempted to free already available temp load register ${this.TLMap[register]}`, 'warn', false))
+            log(new LogData(`Attempted to free already available temp load register ${this.TLMap[register]}`, 'warn'))
             return
         }
         if (!this.TLMap[register]) {
-            log(new LogData(`Attempted to free non-tempload register ${register}! Skipping`, 'warn', false))
+            log(new LogData(`Attempted to free non-tempload register ${register}! Skipping`, 'warn'))
             return
         }
-        log(new LogData(`Freeing temp load register ${this.TLMap[register]} (${register})`, 'accent', false))
+        log(new LogData(`Freeing temp load register ${this.TLMap[register]} (${register})`, 'accent'))
         this.available[this.TLMap[register]] = true
     }
 
