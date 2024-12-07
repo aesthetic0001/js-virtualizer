@@ -19,6 +19,7 @@ const resolveForInStatement = require("../transformations/ForInStatement");
 const resolveFunctionDeclaration = require("../transformations/FunctionDeclaration");
 const resolveLogicalExpression = require("../transformations/LogicalExpression");
 const resolveConditionalExpression = require("../transformations/ConditionalExpression");
+const resolveTemplateLiteral = require("../transformations/TemplateLiteral");
 
 const TL_COUNT = 30
 
@@ -76,6 +77,7 @@ class FunctionBytecodeGenerator {
         this.resolveUnaryExpression = resolveUnaryExpression.bind(this)
         this.resolveUpdateExpression = resolveUpdateExpression.bind(this)
         this.resolveConditionalExpression = resolveConditionalExpression.bind(this)
+        this.resolveTemplateLiteral = resolveTemplateLiteral.bind(this)
 
         this.resolveIfStatement = resolveIfStatement.bind(this)
         this.resolveForStatement = resolveForStatement.bind(this)

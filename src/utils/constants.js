@@ -322,6 +322,7 @@ const cleanupNecessary = new Set([
     // if it is named, then drop when the scope at which it is defined is dropped
     // "ArrowFunctionExpression",
     // "FunctionDeclaration",
+    "TemplateLiteral",
     "Literal"
 ])
 

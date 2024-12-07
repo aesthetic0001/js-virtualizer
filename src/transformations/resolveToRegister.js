@@ -87,9 +87,15 @@ function resolveExpression(expression, options) {
             log(`ConditionalExpression result is at ${this.TLMap[outputRegister]}`)
             break
         }
+        case 'FunctionDeclaration':
         case 'ArrowFunctionExpression': {
             outputRegister = this.resolveFunctionDeclaration(expression).outputRegister
             log(`ArrowFunctionExpression result is at ${this.TLMap[outputRegister]}`)
+            break
+        }
+        case 'TemplateLiteral': {
+            outputRegister = this.resolveTemplateLiteral(expression)
+            log(`TemplateLiteral result is at ${this.TLMap[outputRegister]}`)
             break
         }
     }
