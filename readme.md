@@ -19,9 +19,10 @@ virtualize.js is a proof-of-concept project which brings virtualization-based ob
 
 - [x] transpiler
 - [x] provide a proper `this` property to functions
-- [ ] template literals
+- [x] template literals
 - [x] proper for and while loops
 - [ ] sequence expressions
+- [ ] object destructuring
 - [x] arrow functions
 - [x] object expressions
 - [x] callbacks
