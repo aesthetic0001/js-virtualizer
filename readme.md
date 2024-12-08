@@ -22,7 +22,7 @@ virtualize.js is a proof-of-concept project which brings virtualization-based ob
 - [x] template literals
 - [x] proper for and while loops
 - [ ] sequence expressions
-- [ ] object destructuring
+- [x] object and array destructuring
 - [x] arrow functions
 - [x] object expressions
 - [x] callbacks
