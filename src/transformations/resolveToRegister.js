@@ -103,6 +103,11 @@ function resolveExpression(expression, options) {
             log(`SpreadElement result is at ${this.TLMap[outputRegister]}`)
             break
         }
+        case 'AssignmentPattern': {
+            // has no output register, only side effects
+            this.resolveAssignmentPattern(expression)
+            break
+        }
     }
 
     return {

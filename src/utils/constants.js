@@ -164,6 +164,8 @@ const opNames = [
     "LOGICAL_AND",
     // [dest, left, right]
     "LOGICAL_OR",
+    // [dest, left, right]
+    "LOGICAL_NULLISH",
 
     // iterators
     // [dest, src]
@@ -328,7 +330,8 @@ const cleanupNecessary = new Set([
     // "FunctionDeclaration",
     "SpreadElement",
     "TemplateLiteral",
-    "Literal"
+    "Literal",
+    "AssignmentPattern",
 ])
 
 function needsCleanup(node) {

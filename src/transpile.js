@@ -9,6 +9,7 @@ const {FunctionBytecodeGenerator} = require("./utils/BytecodeGenerator");
 const escodegen = require("escodegen");
 const {log, LogData} = require("./utils/log");
 const zlib = require("node:zlib");
+const {needsCleanup} = require("./utils/constants");
 const encodings = ['base64']
 
 function virtualizeFunctions(code) {
@@ -59,25 +60,44 @@ function virtualizeFunctions(code) {
             generator.declareVariable(dependency, register)
         }
 
+        const params = []
+
         for (const arg of node.params) {
-            if (regToDep[arg.name]) {
-                log(new LogData(`Warning: Parameter "${arg.name}" potentially shadows required dependency "${regToDep[arg]}"!`, 'warn', false));
+            const register = generator.randomRegister()
+            switch (arg.type) {
+                case "AssignmentPattern":
+                    // unnecessary because we only replace the function body
+                    // log(new LogData(`Resolving nullish parameter ${arg.left.name} = ${arg.right.value}`, 'info', false));
+                    generator.declareVariable(arg.left.name, register)
+                    // generator.resolveExpression(arg)
+                    regToDep[register] = arg.left.name
+                    params.push(arg.left.name)
+                    break
+                case "Identifier":
+                    // log(new LogData(`Resolving parameter ${arg.name}`, 'info', false));
+                    generator.declareVariable(arg.name, register)
+                    regToDep[register] = arg.name
+                    params.push(arg.name)
+                    break
+                default: {
+                    throw new Error(`Unsupported argument type: ${arg.type}`)
+                }
             }
-            const register = generator.randomRegister();
-            regToDep[register] = arg.name;
-            generator.declareVariable(arg.name, register)
         }
+
+        console.log(params)
 
         generator.generate();
 
         const bytecode = zlib.deflateSync(Buffer.from(generator.getBytecode())).toString(encoding);
         const virtualizedFunction = functionWrapperTemplate
             .replace("%FUNCTION_NAME%", node.id.name)
-            .replace("%ARGS%", node.params.map((param) => param.name).join(","))
+            .replace("%ARGS%", params.join(","))
             .replace("%ENCODING%", encoding)
             .replace("%DEPENDENCIES%", JSON.stringify(regToDep).replace(/"/g, ""))
             .replace("%OUTPUT_REGISTER%", generator.outputRegister.toString())
             .replace("%BYTECODE%", bytecode);
+
         const dependentTemploads = []
         Object.keys(generator.available).forEach((k) => {
             if (!generator.available[k]) {
