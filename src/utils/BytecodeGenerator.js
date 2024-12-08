@@ -1,4 +1,4 @@
-const {VMChunk, Opcode, encodeDWORD} = require("./assembler");
+const {VMChunk, Opcode, encodeDWORD, BytecodeValue} = require("./assembler");
 const crypto = require("crypto");
 const {registerNames, binaryOperatorToOpcode, needsCleanup} = require("./constants");
 const {log, LogData} = require("./log");
@@ -22,6 +22,7 @@ const resolveConditionalExpression = require("../transformations/ConditionalExpr
 const resolveTemplateLiteral = require("../transformations/TemplateLiteral");
 const resolveSpreadElement = require("../transformations/SpreadElement");
 const resolveAssignmentPattern = require("../transformations/AssignmentPattern");
+const assert = require("node:assert");
 
 const TL_COUNT = 30
 
@@ -283,6 +284,42 @@ class FunctionBytecodeGenerator {
             }
             case 'VariableDeclaration': {
                 for (const declaration of node.declarations) {
+                    if (declaration.id.type === 'ArrayPattern') {
+                        const arrayRegister = this.resolveExpression(declaration.init).outputRegister
+                        const counterRegister = this.getAvailableTempLoad()
+                        const oneRegister = this.getAvailableTempLoad()
+
+                        this.chunk.append(new Opcode('LOAD_DWORD', counterRegister, encodeDWORD(0)));
+                        this.chunk.append(new Opcode('LOAD_DWORD', oneRegister, encodeDWORD(1)));
+
+                        for (let i = 0; i < declaration.id.elements.length; i++) {
+                            const element = declaration.id.elements[i]
+                            assert(element.type === 'Identifier', 'ArrayPattern element is not an Identifier!')
+                            this.declareVariable(element.name, this.randomRegister())
+                            this.chunk.append(new Opcode('GET_INDEX', this.getVariable(element.name), arrayRegister, counterRegister))
+                            this.chunk.append(new Opcode('ADD', counterRegister, counterRegister, oneRegister))
+                        }
+                        this.freeTempLoad(counterRegister)
+                        this.freeTempLoad(oneRegister)
+                        if (needsCleanup(declaration.init)) this.freeTempLoad(arrayRegister)
+                        continue
+                    }
+                    if (declaration.id.type === 'ObjectPattern') {
+                        const objectRegister = this.resolveExpression(declaration.init).outputRegister
+                        for (const property of declaration.id.properties) {
+                            const {key, value} = property
+                            assert(key.type === 'Identifier', 'ObjectPattern key is not an Identifier!')
+                            assert(value.type === 'Identifier', 'ObjectPattern value is not an Identifier!')
+                            this.declareVariable(value.name, this.randomRegister())
+                            const propRegister = this.randomRegister()
+                            const prop = new BytecodeValue(key.name, propRegister)
+                            this.chunk.append(prop.getLoadOpcode())
+                            this.chunk.append(new Opcode('GET_PROP', this.getVariable(value.name), objectRegister, propRegister))
+                            this.freeTempLoad(propRegister)
+                        }
+                        if (needsCleanup(declaration.init)) this.freeTempLoad(objectRegister)
+                        continue
+                    }
                     if (declaration.init) {
                         let out
                         switch (declaration.init.type) {
