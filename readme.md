@@ -14,6 +14,7 @@ virtualize.js is a proof-of-concept project which brings virtualization-based ob
 - performance is not guaranteed. virtualize.js is not intended for use in high-performance applications. it is intended for use in applications where you need to protect your code from reverse engineering
 - no other obfuscation techniques are applied to the input code. virtualize.js is not intended to be used as a standalone obfuscation tool, but rather to be used in conjunction with other obfuscation techniques
 - given the virtual machine, the virtualized function is pretty trivial to reverse engineer. it is recommended that the virtual machine class is obfuscated before use
+- declaring variables by `var` is not supported. it is not guaranteed that the variable will behave as expected. you should use `let` or `const` instead
 
 ## Todo
 
@@ -27,7 +28,7 @@ virtualize.js is a proof-of-concept project which brings virtualization-based ob
 - [x] object expressions
 - [x] callbacks
 - [x] try/catch/finally
-- [ ] var support
+- [ ] proper var support
 - [ ] proper reference counting to manage variables captured by protos (functions declared within functions) and other data types which are passed by reference (objects, arrays, etc.)
   - currently, any captured variables do not get dropped by the transpiler and persist in memory, even when going out of scope
   - need to add a way to check for references to both variables which store protos as well as the variables which are captured by protos
