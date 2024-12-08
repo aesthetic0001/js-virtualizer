@@ -84,7 +84,7 @@ function resolveExpression(expression, options) {
         }
         case 'UpdateExpression': {
             outputRegister = this.resolveUpdateExpression(expression);
-            log(`UpdateExpression result is at ${this.TLMap[outputRegister]}`)
+            log(`UpdateExpression result is at ${outputRegister}`)
             break
         }
         case 'LogicalExpression': {
@@ -123,6 +123,18 @@ function resolveExpression(expression, options) {
             outputRegister = res.outputRegister
             borrowed = res.borrowed
             log(`AwaitExpression result is at ${this.TLMap[outputRegister]}`)
+            break
+        }
+        case 'SequenceExpression': {
+            const res = this.resolveSequenceExpression(expression)
+            outputRegister = res.outputRegister
+            borrowed = res.borrowed
+            log(`SequenceExpression result is at ${outputRegister}`)
+            break
+        }
+        case 'AssignmentExpression': {
+            outputRegister = this.resolveAssignmentExpression(expression)
+            log(`AssignmentExpression result is at ${outputRegister}`)
             break
         }
     }

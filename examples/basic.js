@@ -1,7 +1,7 @@
 const path = require("node:path");
 const {virtualizeFunctions} = require("../src/transpile");
 const fs = require("node:fs");
-const targetFile = "trycatch.js";
+const targetFile = "sequences.js";
 const samplePath = path.join(__dirname, "../sample/");
 const sampleCode = fs.readFileSync(path.join(samplePath, targetFile), "utf-8");
 const final = virtualizeFunctions(sampleCode);

@@ -341,6 +341,8 @@ const cleanupNecessary = new Set([
     "Literal",
     "AssignmentPattern",
     "AwaitExpression",
+    "SequenceExpression",
+    "AssignmentExpression",
 ])
 
 function needsCleanup(node) {

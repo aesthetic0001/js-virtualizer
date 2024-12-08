@@ -26,6 +26,8 @@ const assert = require("node:assert");
 const resolveAwaitExpression = require("../transformations/AwaitExpression");
 const resolveTryStatement = require("../transformations/TryStatement");
 const resolveThrowStatement = require("../transformations/ThrowStatement");
+const resolveSequenceExpression = require("../transformations/SequenceExpression");
+const resolveAssignmentExpression = require("../transformations/AssignmentExpression");
 
 const TL_COUNT = 30
 
@@ -88,6 +90,8 @@ class FunctionBytecodeGenerator {
         this.resolveAssignmentPattern = resolveAssignmentPattern.bind(this)
         this.resolveAwaitExpression = resolveAwaitExpression.bind(this)
         this.resolveThrowStatement = resolveThrowStatement.bind(this)
+        this.resolveSequenceExpression = resolveSequenceExpression.bind(this)
+        this.resolveAssignmentExpression = resolveAssignmentExpression.bind(this)
 
         this.resolveIfStatement = resolveIfStatement.bind(this)
         this.resolveForStatement = resolveForStatement.bind(this)
@@ -257,6 +261,10 @@ class FunctionBytecodeGenerator {
 
     // this is probably an expression
     handleNode(node) {
+        if (!node) {
+            log(new LogData('Attempted to handle null node! Skipping', 'warn', false))
+            return
+        }
         // for vfuncs
         if (needsCleanup(node)) {
             const out = this.resolveExpression(node).outputRegister
@@ -337,6 +345,7 @@ class FunctionBytecodeGenerator {
                     if (declaration.init) {
                         let out
                         switch (declaration.init.type) {
+                            case 'FunctionExpression':
                             case 'ArrowFunctionExpression':
                             case 'FunctionDeclaration': {
                                 const {dependencies} = this.resolveFunctionDeclaration(declaration.init, {
@@ -356,6 +365,7 @@ class FunctionBytecodeGenerator {
                 }
                 break;
             }
+            case 'FunctionExpression':
             case 'ArrowFunctionExpression':
             case 'FunctionDeclaration': {
                 const name = node.id.name
@@ -366,52 +376,8 @@ class FunctionBytecodeGenerator {
                 break
             }
             case 'ExpressionStatement': {
-                switch (node.expression.type) {
-                    case 'AssignmentExpression': {
-                        const {left, right, operator} = node.expression;
-                        const leftRegister = this.resolveExpression(left).outputRegister
-                        let rightRegister
-                        if (left.type === 'Identifier') {
-                            const name = left.name
-                            if (this.activeVFunctions[name]) {
-
-                            }
-                            switch (right.type) {
-                                case 'ArrowFunctionExpression':
-                                case 'FunctionDeclaration': {
-                                    this.resolveFunctionDeclaration(right, {
-                                        declareName: name
-                                    })
-                                    rightRegister = this.getVariable(left.name)
-                                    break
-                                }
-                            }
-                        }
-
-                        if (!rightRegister) rightRegister = this.resolveExpression(right).outputRegister
-
-                        switch (operator) {
-                            case '=': {
-                                log(`Evaluating regular assignment expression with SET_REF`)
-                                this.chunk.append(new Opcode('SET_REF', leftRegister, rightRegister));
-                                break;
-                            }
-                            default: {
-                                const opcode = binaryOperatorToOpcode(operator.slice(0, -1));
-                                log(`Evaluating inclusive assignment expression with ${operator} using ${opcode}`)
-                                this.chunk.append(new Opcode(opcode, leftRegister, leftRegister, rightRegister));
-                            }
-                        }
-                        if (needsCleanup(left)) this.freeTempLoad(leftRegister)
-                        if (needsCleanup(right)) this.freeTempLoad(rightRegister)
-                        break;
-                    }
-                    default: {
-                        const out = this.resolveExpression(node.expression).outputRegister
-                        if (needsCleanup(node.expression)) this.freeTempLoad(out)
-                        break
-                    }
-                }
+                const out = this.resolveExpression(node.expression).outputRegister
+                if (needsCleanup(node.expression)) this.freeTempLoad(out)
                 break
             }
             case 'BreakStatement': {
