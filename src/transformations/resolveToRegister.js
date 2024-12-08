@@ -1,9 +1,18 @@
 const {BytecodeValue} = require("../utils/assembler");
 const {log, LogData} = require("../utils/log");
+const {registers} = require("../utils/constants");
 
 // Produces a result that may be mutable or immutable, depending on the expression that was resolved
 // Ownership is explicitly stated in the "borrowed" field of the return object
 function resolveExpression(expression, options) {
+    if (!expression) {
+        log(new LogData(`Expression is null! Using undefined register as output`, 'warn', true))
+        return {
+            outputRegister: registers.UNDEFINED,
+            borrowed: false,
+            metadata: {}
+        }
+    }
     let outputRegister, borrowed = false
     options = options ?? {}
     options.computed = options.computed ?? true

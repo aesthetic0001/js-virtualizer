@@ -26,6 +26,7 @@ virtualize.js is a proof-of-concept project which brings virtualization-based ob
 - [x] arrow functions
 - [x] object expressions
 - [x] callbacks
+- [ ] try/catch/finally
 - [ ] proper reference counting to manage variables captured by protos (functions declared within functions) and other data types which are passed by reference (objects, arrays, etc.)
   - currently, any captured variables do not get dropped by the transpiler and persist in memory, even when going out of scope
   - need to add a way to check for references to both variables which store protos as well as the variables which are captured by protos
