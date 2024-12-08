@@ -178,6 +178,10 @@ const implOpcode = {
         const errRegister = this.readByte();
         throw new Error(this.read(errRegister));
     },
+    THROW_ARGUMENT: function () {
+        const errRegister = this.readByte();
+        throw this.read(errRegister);
+    },
     SET: function () {
         const dest = this.readByte(), src = this.readByte();
         this.write(dest, src);

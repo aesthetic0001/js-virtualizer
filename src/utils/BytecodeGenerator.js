@@ -24,6 +24,8 @@ const resolveSpreadElement = require("../transformations/SpreadElement");
 const resolveAssignmentPattern = require("../transformations/AssignmentPattern");
 const assert = require("node:assert");
 const resolveAwaitExpression = require("../transformations/AwaitExpression");
+const resolveTryStatement = require("../transformations/TryStatement");
+const resolveThrowStatement = require("../transformations/ThrowStatement");
 
 const TL_COUNT = 30
 
@@ -85,6 +87,7 @@ class FunctionBytecodeGenerator {
         this.resolveSpreadElement = resolveSpreadElement.bind(this)
         this.resolveAssignmentPattern = resolveAssignmentPattern.bind(this)
         this.resolveAwaitExpression = resolveAwaitExpression.bind(this)
+        this.resolveThrowStatement = resolveThrowStatement.bind(this)
 
         this.resolveIfStatement = resolveIfStatement.bind(this)
         this.resolveForStatement = resolveForStatement.bind(this)
@@ -92,6 +95,7 @@ class FunctionBytecodeGenerator {
         this.resolveForInStatement = resolveForInStatement.bind(this)
         this.resolveWhileStatement = resolveWhileStatement.bind(this)
         this.resolveFunctionDeclaration = resolveFunctionDeclaration.bind(this)
+        this.resolveTryStatement = resolveTryStatement.bind(this)
     }
 
     dropVariable(variableName) {
@@ -267,6 +271,14 @@ class FunctionBytecodeGenerator {
             case 'IfStatement': {
                 this.resolveIfStatement(node)
                 break;
+            }
+            case 'TryStatement': {
+                this.resolveTryStatement(node)
+                break
+            }
+            case 'ThrowStatement': {
+                this.resolveThrowStatement(node)
+                break
             }
             case 'ForStatement': {
                 this.resolveForStatement(node)

@@ -48,18 +48,14 @@ class Opcode {
 class VMChunk {
     constructor() {
         this.code = [];
-        this.hasCustomTerminator = false;
     }
 
     append(opcode) {
         this.code.push(opcode);
-        if (opcode.name === 'END') {
-            this.hasCustomTerminator = true;
-        }
     }
 
     toBytes() {
-        return !this.hasCustomTerminator ? Buffer.concat([...this.code.map(opcode => opcode.toBytes()), Buffer.from([opcodes.END])]) : Buffer.concat(this.code.map(opcode => opcode.toBytes()));
+        return Buffer.concat(this.code.map(opcode => opcode.toBytes()));
     }
 
     getCurrentIP() {
@@ -77,10 +73,7 @@ class VMChunk {
             IP += opcode.toBytes().length;
             return line;
         });
-        if (!this.hasCustomTerminator) {
-            lines.push(`[IP: ${IP}] - END`);
-        }
-        const info = [`Total Operations: ${this.code.length + (!this.hasCustomTerminator ? 1 : 0)} | Total Bytes: ${this.toBytes().length}`]
+        const info = [`Total Operations: ${this.code.length} | Total Bytes: ${this.toBytes().length}`]
         return [...info, ...lines].join('\n');
     }
 }

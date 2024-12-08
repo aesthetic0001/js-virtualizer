@@ -72,6 +72,8 @@ const opNames = [
     "TRY_CATCH_FINALLY",
     // [err_message_register]
     "THROW",
+    // [err_register]
+    "THROW_ARGUMENT",
 
     // memory
     // [dest, src]
