@@ -79,6 +79,12 @@ function virtualizeFunctions(code) {
                     regToDep[register] = arg.name
                     params.push(arg.name)
                     break
+                case "RestElement":
+                    // log(new LogData(`Resolving rest parameter ${arg.argument.name}`, 'info', false));
+                    generator.declareVariable(arg.argument.name, register)
+                    regToDep[register] = arg.argument.name
+                    params.push(arg.argument.name)
+                    break
                 default: {
                     throw new Error(`Unsupported argument type: ${arg.type}`)
                 }

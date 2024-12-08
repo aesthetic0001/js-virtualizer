@@ -93,6 +93,7 @@ const implOpcode = {
         const fnOffset = this.readDWORD(),
             dest = this.readByte(),
             returnDataStore = this.readByte(),
+            useRest = this.readBool(),
             argArrayMapper = this.readArrayRegisters();
         // we have to specify mutable registers, because it could lead to undefined behavior
         // the mutability rules that applied when the function was set up by the transpiler are not guaranteed to be the same
@@ -106,7 +107,11 @@ const implOpcode = {
 
         function cb(...args) {
             this.regstack.push([this.registers.slice(), returnDataStore]);
-            for (let i = 0; i < args.length; i++) {
+            for (let i = 0; i < argArrayMapper.length; i++) {
+                if (useRest && i === argArrayMapper.length - 1) {
+                    this.write(argArrayMapper[i], args.slice(i));
+                    break;
+                }
                 this.write(argArrayMapper[i], args[i]);
             }
             this.registers[registers.INSTRUCTION_POINTER] = cur + fnOffset - 1;

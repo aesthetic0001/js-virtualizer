@@ -27,6 +27,8 @@ function resolveFunctionDeclaration(node, options) {
     const hasDefault = []
     const argRegisters = new Set()
 
+    const lastIsRest = params[params.length - 1].type === 'RestElement'
+
     for (const param of params) {
         switch (param.type) {
             case 'AssignmentPattern': {
@@ -41,6 +43,13 @@ function resolveFunctionDeclaration(node, options) {
                 this.declareVariable(param.name);
                 argRegisters.add(this.getVariable(param.name))
                 argMap.push(this.getVariable(param.name))
+                break
+            }
+            case 'RestElement': {
+                const {argument} = param
+                this.declareVariable(argument.name)
+                argRegisters.add(this.getVariable(argument.name))
+                argMap.push(this.getVariable(argument.name))
                 break
             }
             default: {
@@ -93,7 +102,7 @@ function resolveFunctionDeclaration(node, options) {
     this.exitVFuncContext()
     jumpOver.modifyArgs(encodeDWORD(this.chunk.getCurrentIP() - jumpOverIP))
     this.chunk.append(new Opcode('VFUNC_SETUP_CALLBACK', encodeDWORD(startIP - this.chunk.getCurrentIP()),
-        options.declareRegister, outputRegister, encodeArrayRegisters(argMap), encodeArrayRegisters(dependencies)))
+        options.declareRegister, outputRegister, lastIsRest ? 1 : 0, encodeArrayRegisters(argMap), encodeArrayRegisters(dependencies)))
     this.freeTempLoad(outputRegister)
 
     return {
