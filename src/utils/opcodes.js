@@ -50,7 +50,7 @@ const implOpcode = {
     },
     FUNC_CALL: function () {
         const fn = this.readByte(), dst = this.readByte(),
-            funcThis = this.readByte(), args = this.readArray();
+            funcThis = this.readByte(), args = this.readArray()
         log(`Calling function at register ${fn} with this at register ${funcThis} and args: ${args}`);
         const res = this.read(fn).apply(this.read(funcThis), args);
         log(`Function call result: ${res} => ${dst}`);
@@ -62,6 +62,15 @@ const implOpcode = {
         const args = this.read(argsReg);
         log(`Calling function with arraycall convention at register ${fn} with this at register ${funcThis} and args: ${args}`);
         const res = this.read(fn).apply(this.read(funcThis), args);
+        log(`Function call result: ${res} => ${dst}`);
+        this.write(dst, res);
+    },
+    FUNC_ARRAY_CALL_AWAIT: async function () {
+        const fn = this.readByte(), dst = this.readByte(),
+            funcThis = this.readByte(), argsReg = this.readByte();
+        const args = this.read(argsReg);
+        log(`Calling function with arraycall convention at register ${fn} with this at register ${funcThis} and args: ${args}`);
+        const res = await this.read(fn).apply(this.read(funcThis), args);
         log(`Function call result: ${res} => ${dst}`);
         this.write(dst, res);
     },

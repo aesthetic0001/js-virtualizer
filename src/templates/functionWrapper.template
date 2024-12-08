@@ -1,4 +1,4 @@
-function %FUNCTION_NAME%(%ARGS%) {
-    const VM = new JSVM();VM.loadFromString('%BYTECODE%', '%ENCODING%');VM.loadDependencies(%DEPENDENCIES%);VM.run();
+%FN_PREFIX%function %FUNCTION_NAME%(%ARGS%) {
+    const VM = new JSVM();VM.loadFromString('%BYTECODE%', '%ENCODING%');VM.loadDependencies(%DEPENDENCIES%);%RUNCMD%;
     return VM.registers[%OUTPUT_REGISTER%];
 }

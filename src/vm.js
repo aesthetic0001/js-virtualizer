@@ -151,6 +151,29 @@ class JSVM {
             }
         }
     }
+
+    async runAsync() {
+        while (true) {
+            const opcode = this.readByte()
+            if (opcode === undefined || opNames[opcode] === "END") {
+                // treat as end
+                log(`[IP = ${this.read(registers.INSTRUCTION_POINTER) - 1}]: End of execution`)
+                break
+            }
+            if (!this.opcodes[opcode]) {
+                log(`[IP = ${this.read(registers.INSTRUCTION_POINTER) - 1}]: Unknown opcode ${opcode}`)
+                // treat as NOP
+                continue
+            }
+            log(`[IP = ${this.read(registers.INSTRUCTION_POINTER) - 1}]: Executing ${opNames[opcode]}`)
+            try {
+                await this.opcodes[opcode]()
+            } catch (e) {
+                log(`${e.toString()} at IP = ${this.read(registers.INSTRUCTION_POINTER)}`)
+                throw e
+            }
+        }
+    }
 }
 
 module.exports = JSVM

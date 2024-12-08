@@ -89,12 +89,14 @@ function virtualizeFunctions(code) {
 
         const bytecode = zlib.deflateSync(Buffer.from(generator.getBytecode())).toString(encoding);
         const virtualizedFunction = functionWrapperTemplate
+            .replace("%FN_PREFIX%", node.async ? "async " : "")
             .replace("%FUNCTION_NAME%", node.id.name)
             .replace("%ARGS%", params.join(","))
             .replace("%ENCODING%", encoding)
             .replace("%DEPENDENCIES%", JSON.stringify(regToDep).replace(/"/g, ""))
             .replace("%OUTPUT_REGISTER%", generator.outputRegister.toString())
-            .replace("%BYTECODE%", bytecode);
+            .replace("%BYTECODE%", bytecode)
+            .replace("%RUNCMD%", node.async ? "await VM.runAsync()" : "VM.run()");
 
         const dependentTemploads = []
         Object.keys(generator.available).forEach((k) => {

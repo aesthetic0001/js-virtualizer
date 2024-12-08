@@ -9,6 +9,7 @@ function resolveExpression(expression, options) {
     options.computed = options.computed ?? true
     options.forceObjectImmutability = options.forceObjectImmutability ?? false
     options.forceImmutableMerges = options.forceImmutableMerges ?? true
+    options.awaited = options.awaited ?? false
 
     const metadata = {}
     const {computed} = options
@@ -48,7 +49,7 @@ function resolveExpression(expression, options) {
             break;
         }
         case 'CallExpression': {
-            outputRegister = this.resolveCallExpression(expression);
+            outputRegister = this.resolveCallExpression(expression, options.awaited);
             log(`CallExpression result is at ${this.TLMap[outputRegister]}`)
             break
         }
@@ -106,6 +107,13 @@ function resolveExpression(expression, options) {
         case 'AssignmentPattern': {
             // has no output register, only side effects
             this.resolveAssignmentPattern(expression)
+            break
+        }
+        case 'AwaitExpression': {
+            const res = this.resolveAwaitExpression(expression)
+            outputRegister = res.outputRegister
+            borrowed = res.borrowed
+            log(`AwaitExpression result is at ${this.TLMap[outputRegister]}`)
             break
         }
     }

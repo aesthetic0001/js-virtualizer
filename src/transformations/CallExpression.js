@@ -3,8 +3,9 @@ const {Opcode, BytecodeValue, encodeDWORD} = require("../utils/assembler");
 const {registers, needsCleanup} = require("../utils/constants");
 
 // ALWAYS produces a mutable result, ownership is transferred to the caller
-function resolveCallExpression(node) {
+function resolveCallExpression(node, awaited) {
     const {callee, arguments} = node;
+    awaited = awaited ?? false
 
     log(`Resolving call expression: ${callee.type}(${arguments.map(arg => arg.type).join(', ')})`)
 
@@ -35,7 +36,7 @@ function resolveCallExpression(node) {
     })
 
     const mergeTo = argsRegister
-    this.chunk.append(new Opcode('FUNC_ARRAY_CALL', calleeRegister, mergeTo, metadata.objectRegister ?? registers.VOID, argsRegister));
+    this.chunk.append(new Opcode(awaited ? 'FUNC_ARRAY_CALL_AWAIT' : 'FUNC_ARRAY_CALL', calleeRegister, mergeTo, metadata.objectRegister ?? registers.VOID, argsRegister));
     if (needsCleanup(callee)) this.freeTempLoad(calleeRegister)
     this.freeTempLoad(counterRegister)
     this.freeTempLoad(oneRegister)

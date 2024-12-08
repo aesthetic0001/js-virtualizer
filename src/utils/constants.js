@@ -47,6 +47,8 @@ const opNames = [
     "FUNC_CALL",
     // [fn, dst, functhis (identity), argsReg] : argsReg is a register that contains an array of arguments
     "FUNC_ARRAY_CALL",
+    // [fn, dst, functhis (identity), argsReg] : argsReg is a register that contains an array of arguments
+    "FUNC_ARRAY_CALL_AWAIT",
     // - internal functions (defined in bytecode) -
     // argmap should be a list of functionreg: argreg
     // [offset, return_data_store_external, ...argmap]
@@ -336,6 +338,7 @@ const cleanupNecessary = new Set([
     "TemplateLiteral",
     "Literal",
     "AssignmentPattern",
+    "AwaitExpression",
 ])
 
 function needsCleanup(node) {

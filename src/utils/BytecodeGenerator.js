@@ -23,6 +23,7 @@ const resolveTemplateLiteral = require("../transformations/TemplateLiteral");
 const resolveSpreadElement = require("../transformations/SpreadElement");
 const resolveAssignmentPattern = require("../transformations/AssignmentPattern");
 const assert = require("node:assert");
+const resolveAwaitExpression = require("../transformations/AwaitExpression");
 
 const TL_COUNT = 30
 
@@ -83,6 +84,7 @@ class FunctionBytecodeGenerator {
         this.resolveTemplateLiteral = resolveTemplateLiteral.bind(this)
         this.resolveSpreadElement = resolveSpreadElement.bind(this)
         this.resolveAssignmentPattern = resolveAssignmentPattern.bind(this)
+        this.resolveAwaitExpression = resolveAwaitExpression.bind(this)
 
         this.resolveIfStatement = resolveIfStatement.bind(this)
         this.resolveForStatement = resolveForStatement.bind(this)
