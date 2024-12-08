@@ -1,5 +1,6 @@
 const {Opcode, encodeDWORD, encodeArrayRegisters} = require("../utils/assembler");
 const {log, LogData} = require("../utils/log");
+const {registerNames, needsCleanup} = require("../utils/constants");
 
 // always returns a MUTABLE register, ownership is transferred to the caller
 function resolveFunctionDeclaration(node, options) {
@@ -23,18 +24,45 @@ function resolveFunctionDeclaration(node, options) {
     const jumpOverIP = this.chunk.getCurrentIP()
     const jumpOver = new Opcode('JUMP_UNCONDITIONAL', encodeDWORD(0))
     this.chunk.append(jumpOver)
+    const hasDefault = []
+    const argRegisters = new Set()
+
     for (const param of params) {
-        this.declareVariable(param.name);
-        argMap.push(this.getVariable(param.name))
+        switch (param.type) {
+            case 'AssignmentPattern': {
+                const {left} = param
+                this.declareVariable(left.name)
+                argRegisters.add(this.getVariable(left.name))
+                argMap.push(this.getVariable(left.name))
+                hasDefault.push(param)
+                break
+            }
+            case 'Identifier': {
+                this.declareVariable(param.name);
+                argRegisters.add(this.getVariable(param.name))
+                argMap.push(this.getVariable(param.name))
+                break
+            }
+            default: {
+                throw new Error(`Unsupported vfunc argument type: ${param.type}`)
+            }
+        }
+    }
+    const startIP = this.chunk.getCurrentIP()
+    for (const param of hasDefault) {
+        this.resolveExpression(param)
     }
     this.enterVFuncContext(label)
-    const startIP = this.chunk.getCurrentIP()
     this.handleNode(body)
 
     for (const register of this.vfuncReferences[this.vfuncReferences.length - 1]) {
         // once the reference to this register is dropped, any references to itself will be dropped automatically
         if (register === options.declareRegister) {
             log(new LogData(`Skipping recursive call dependency ${outputRegister}`, 'accent', true))
+            continue
+        }
+        if (argRegisters.has(register)) {
+            log(new LogData(`Skipping argument dependency ${register}`, 'accent', true))
             continue
         }
         dependencies.push(register)

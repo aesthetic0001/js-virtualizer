@@ -1,12 +1,13 @@
 const JSVM = require('../src/vm');
 function evaluate(a = 1, b = 1) {
     const VM = new JSVM();
-    VM.loadFromString('eJxTv5puLypx1Q0ADUQC6w==', 'base64');
+    VM.loadFromString('eJzjZ2BgUGESZ2BgYLEXEBAHs1jt+fnF1cUF+EU9xN1kPNx4/////7Deg0mAn4HFg4GBgTknP11c/IMHB4jDyNTEwMDAwHQAxObQArMng0llkAh3vRaTloRHk5Z6U9MBbnGPDx7qHjbhouYeAEkmFHg=', 'base64');
     VM.loadDependencies({
-        63: b,
-        103: a
+        60: a,
+        87: b,
+        240: console
     });
     VM.run();
-    return VM.registers[24];
+    return VM.registers[55];
 }
 console.log(evaluate());

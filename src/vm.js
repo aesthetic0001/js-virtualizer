@@ -12,6 +12,7 @@ class JSVM {
         this.opcodes = {}
         this.code = null
         this.registers[registers.INSTRUCTION_POINTER] = 0
+        this.registers[registers.UNDEFINED] = undefined
         this.registers[registers.VOID] = 0
         Object.keys(opcodes).forEach((opcode) => {
             this.opcodes[opcodes[opcode]] = implOpcode[opcode].bind(this)

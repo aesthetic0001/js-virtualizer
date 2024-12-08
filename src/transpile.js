@@ -85,8 +85,6 @@ function virtualizeFunctions(code) {
             }
         }
 
-        console.log(params)
-
         generator.generate();
 
         const bytecode = zlib.deflateSync(Buffer.from(generator.getBytecode())).toString(encoding);

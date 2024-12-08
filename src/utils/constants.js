@@ -1,7 +1,11 @@
 const registerNames = [
+    // read-only
     "INSTRUCTION_POINTER",
-    // for void functions/operations
-    "VOID"
+    "UNDEFINED",
+
+    // general purpose
+    // for void functions/operations, free to write whenever. data here is not guaranteed to be preserved
+    "VOID",
 ]
 
 const reservedNames = new Set(registerNames)
