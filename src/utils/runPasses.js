@@ -5,10 +5,10 @@ const passes = [RemoveUnused]
 
 passes.sort((a, b) => a - b)
 
-function runPasses(VMChunk) {
+function runPasses(VMChunk, vmAST) {
     passes.forEach(pass => {
         log(`Running pass: ${pass}`)
-        pass.run(VMChunk)
+        pass.run(VMChunk, vmAST)
     })
 }
 

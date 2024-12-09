@@ -5,8 +5,8 @@ class Pass {
         this.priority = priority;
     }
 
-    run(VMChunk) {
-        this.handler(VMChunk);
+    run(VMChunks, vmAST) {
+        this.handler(VMChunks, vmAST);
     }
 
     toString() {

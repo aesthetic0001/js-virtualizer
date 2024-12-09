@@ -4,6 +4,7 @@ const eslintScope = require("eslint-scope");
 const {readFileSync, writeFileSync} = require("node:fs");
 const path = require("node:path");
 const functionWrapperTemplate = readFileSync(path.join(__dirname, "./templates/functionWrapper.template"), "utf-8");
+const requireTemplate = readFileSync(path.join(__dirname, "./templates/requireTemplate.template"), "utf-8");
 const crypto = require("crypto");
 const {FunctionBytecodeGenerator} = require("./utils/BytecodeGenerator");
 const escodegen = require("escodegen");
@@ -11,9 +12,14 @@ const {log, LogData} = require("./utils/log");
 const zlib = require("node:zlib");
 const runPasses = require("./utils/runPasses");
 const fs = require("node:fs");
+
+const vmDist = fs.readFileSync(path.join(__dirname, './vm_dist.js'), 'utf-8');
 const encodings = ['base64']
 
+if (!fs.existsSync(path.join(__dirname, '../output'))) fs.mkdirSync(path.join(__dirname, '../output'))
+
 function virtualizeFunctions(code) {
+    const correspondingVM = path.join(__dirname, `../output/${crypto.randomBytes(8).toString('hex')}.vm.js`);
     const comments = [];
     const ast = acorn.parse(code, {
         ecmaVersion: "latest",
@@ -22,6 +28,22 @@ function virtualizeFunctions(code) {
         onComment: comments,
         ranges: true,
     });
+
+    const vmAST = acorn.parse(vmDist, {
+        ecmaVersion: "latest",
+        sourceType: "module",
+        locations: true,
+        ranges: true,
+    })
+
+    const requireInject = requireTemplate.replace("%VM_PATH%", correspondingVM)
+
+    ast.body.unshift(acorn.parse(requireInject, {
+        ecmaVersion: "latest",
+        sourceType: "module",
+        locations: true,
+        ranges: true,
+    }).body[0])
 
     function needToVirtualize(node) {
         return comments.some((comment) => {
@@ -45,6 +67,8 @@ function virtualizeFunctions(code) {
         });
         return Array.from(dependencies)
     }
+
+    const chunks = []
 
     function virtualizeFunction(node) {
         log(new LogData(`Virtualizing Function "${node.id.name}"`, 'info', false));
@@ -93,8 +117,7 @@ function virtualizeFunctions(code) {
         }
 
         generator.generate();
-
-        runPasses(generator.chunk);
+        chunks.push(generator.chunk)
 
         const bytecode = zlib.deflateSync(Buffer.from(generator.getBytecode())).toString(encoding);
         const virtualizedFunction = functionWrapperTemplate
@@ -125,11 +148,6 @@ function virtualizeFunctions(code) {
             ranges: true,
         });
 
-        const accompanyingVM = escodegen.generate(generator.chunk.vmAST);
-
-        if (!fs.existsSync(path.join(__dirname, '../output'))) fs.mkdirSync(path.join(__dirname, '../output'))
-        fs.writeFileSync(path.join(__dirname, `../output/${node.id.name}.vm.js`), accompanyingVM);
-
         return replacedBody.body[0].body.body
     }
 
@@ -141,6 +159,9 @@ function virtualizeFunctions(code) {
         },
     });
 
+    runPasses(chunks, vmAST);
+    const accompanyingVM = escodegen.generate(vmAST);
+    fs.writeFileSync(correspondingVM, accompanyingVM);
     return escodegen.generate(ast);
 }
 
