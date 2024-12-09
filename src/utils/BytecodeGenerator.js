@@ -144,7 +144,7 @@ class FunctionBytecodeGenerator {
         if (this.getActiveLabel('vfunc')) {
             const accessContext = this.getActiveLabel('vfunc')
             if (metadata.vfuncContext !== accessContext) {
-                log(new LogData(`VFunc capturing variable ${variableName} by reference! Current Context: ${accessContext}, Variable Context: ${metadata.vfuncContext}`, 'warn', false))
+                log(new LogData(`VFunc capturing variable ${variableName} by reference! Current Context: ${accessContext}, Variable Context: ${metadata.vfuncContext}`, 'warn'))
                 this.vfuncReferences[this.vfuncReferences.length - 1].add(register)
             }
         }
@@ -471,7 +471,7 @@ class FunctionBytecodeGenerator {
         }
         // discard all variables in the current scope
         for (const variableName of this.activeScopes.pop()) {
-            log(new LogData(`Dropping variable ${variableName}`, 'accent', false))
+            log(new LogData(`Dropping variable ${variableName}`, 'accent'))
             this.dropVariable(variableName)
         }
     }
