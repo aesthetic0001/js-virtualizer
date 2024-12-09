@@ -47,7 +47,11 @@ async function transpile(code, options) {
 
     const vmAST = acorn.parse(vmDist, {ecmaVersion: "latest", sourceType: "module"})
 
-    const requireInject = requireTemplate.replace("%VM_PATH%", options.vmOutputPath)
+    let vmRelativePath = path.relative(path.dirname(options.transpiledOutputPath), options.vmOutputPath)
+    if (!vmRelativePath.startsWith(".")) {
+        vmRelativePath = `./${vmRelativePath}`
+    }
+    const requireInject = requireTemplate.replace("%VM_PATH%", vmRelativePath)
 
     ast.body.unshift(acorn.parse(requireInject, {ecmaVersion: "latest", sourceType: "module"}).body[0])
 

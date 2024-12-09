@@ -8,6 +8,57 @@ virtualization-based obfuscation for javascript
 
 virtualize.js is a proof-of-concept project which brings virtualization-based obfuscation to javascript. In this implementation, bytecode is fed to a virtual machine implemented javascript which runs on its own instruction set. A transpiler is included to convert individual **functions** to opcodes for the VM. It is important to note that virtualize.js is **not intended for use on entire programs, but rather for individual functions**! There will be a significant performance hit if you try to run an entire program through the VM.
 
+## Usage
+
+> [!WARNING]  
+> You need to mark the functions you want to virtualize by putting a comment with the text `// @virtualize` above the function.
+
+```javascript
+// @virtualize
+function virtualize() {
+  console.log("hello from the virtualized function");
+}
+
+function notVirtualized() {
+  console.log("this function will not be virtualized");
+}
+```
+
+> [!TIP]
+> See [examples/basic.js](examples/basic.js) for a full example and the samples folder for some sample code you can try virtualizing.
+
+```javascript
+const {transpile} = require("../src/transpile");
+
+async function main() {
+  const result = await transpile(`
+    // @virtualize
+    function virtualize() {
+      console.log("hello world from the JSVM");
+    }
+`, {
+    // the filename of the code; will be used as the default output filename
+    fileName: targetSample,
+    // whether or not the transpiler should directly write the output to a file
+    writeOutput: true,
+    // the path to write the vm for the transpiled code to
+    vmOutputPath: "./vm_output.js",
+    // the path to write the transpiled code to
+    transpiledOutputPath: "./output.js",
+    // the passes apply to the result before returning
+    passes: [
+      "RemoveUnused",
+      "ObfuscateVM",
+      "ObfuscateTranspiled"
+    ]
+  });
+
+  console.log(`Virtualized code saved to: ${result.transpiledOutputPath}`);
+}
+
+main();
+```
+
 ## Transpiler Support
 
 - [x] variables
