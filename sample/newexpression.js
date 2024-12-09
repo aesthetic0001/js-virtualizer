@@ -4,7 +4,7 @@ class Example {
     constructor(a, b) {
         this.a = a;
         this.b = b;
-        this.secret = Math.random();
+        this.secret = 0.5;
         console.log('Secret');
         console.log(this.secret);
     }

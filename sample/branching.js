@@ -1,6 +1,6 @@
 // @virtualize
 function evaluate() {
-    const value = Math.random()
+    const value = 0.5
     console.log("Selected value:", value)
     if (value > 0.7) {
         console.log("Value is greater than 0.7")

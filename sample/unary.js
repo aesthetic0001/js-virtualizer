@@ -2,7 +2,7 @@
 
 // @virtualize
 function evaluate() {
-    const value = Math.random()
+    const value = 0.5
     console.log("Not true", !true)
     console.log("Not false", !false)
     console.log("Not 0", !0)
