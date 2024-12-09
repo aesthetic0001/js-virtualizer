@@ -28,6 +28,7 @@ const resolveTryStatement = require("../transformations/TryStatement");
 const resolveThrowStatement = require("../transformations/ThrowStatement");
 const resolveSequenceExpression = require("../transformations/SequenceExpression");
 const resolveAssignmentExpression = require("../transformations/AssignmentExpression");
+const resolveSwitchStatement = require("../transformations/SwitchStatement");
 
 const TL_COUNT = 30
 
@@ -106,6 +107,7 @@ class FunctionBytecodeGenerator {
         this.resolveWhileStatement = resolveWhileStatement.bind(this)
         this.resolveFunctionDeclaration = resolveFunctionDeclaration.bind(this)
         this.resolveTryStatement = resolveTryStatement.bind(this)
+        this.resolveSwitchStatement = resolveSwitchStatement.bind(this)
     }
 
     dropVariable(variableName) {
@@ -312,6 +314,10 @@ class FunctionBytecodeGenerator {
             case 'IfStatement': {
                 this.resolveIfStatement(node)
                 break;
+            }
+            case 'SwitchStatement': {
+                this.resolveSwitchStatement(node)
+                break
             }
             case 'TryStatement': {
                 this.resolveTryStatement(node)
