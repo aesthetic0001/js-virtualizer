@@ -1,4 +1,4 @@
-const JSVM = require('../src/vm.js');
+const JSVM = require('../src/vm_dev.js');
 const {
     VMChunk,
     Opcode,

@@ -1,4 +1,4 @@
-const JSVM = require('../src/vm');
+const JSVM = require('../src/vm_dev');
 function evaluate() {
     const VM = new JSVM();
     VM.loadFromString('789c63746360606064346660606062346060606096727333602c63606060e1372e93dae366cc5fb9470d00413c0575', 'hex');

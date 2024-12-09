@@ -1,4 +1,4 @@
-const JSVM = require('../src/vm');
+const JSVM = require('../src/vm_dev');
 const mineflayer = require('mineflayer')
 
 function onLogin() {

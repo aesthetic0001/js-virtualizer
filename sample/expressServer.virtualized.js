@@ -1,6 +1,6 @@
 const express = require('express');
 const axios = require('axios');
-const JSVM = require('../src/vm');
+const JSVM = require('../src/vm_dev');
 async function onGetProxy(req, res) {
     const VM = new JSVM();
     VM.loadFromString('eJxtj7EKwjAQhq8aRahEECzp1i7S8SaHvoCTmy8QaBBBRZN0cJBuzt52PkDeU9KCU7f/v/+O7z9BADB7tMY+Fb9IRDtt7UUhU1bjjuot0TpO3302d1771inuaBF9MkEAgEnotQRIPjmhrBBDytSRYAAQztwahcQL7tdCfyKjFiUAbA5n5863U9HaS3HXVl+NNzbnUFYhyBSZOPsmQ7eT8YqPI/CcsI7YJdORstXwykAeLSsiXzTaa1WuZE5Y/kvvf/uWQIs=', 'base64');

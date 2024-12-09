@@ -1,4 +1,4 @@
-const JSVM = require('../src/vm');
+const JSVM = require('../src/vm_dev');
 const multiplier = 2;
 function sum(a, b) {
     const VM = new JSVM();
