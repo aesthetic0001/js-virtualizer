@@ -1,4 +1,4 @@
-const JSVM = require('../src/vm_dev');
+
 
 async function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));

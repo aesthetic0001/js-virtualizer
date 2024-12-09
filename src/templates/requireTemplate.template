@@ -1,0 +1,1 @@
+const JSVM = require("%VM_PATH%");

@@ -1,4 +1,4 @@
-const JSVM = require("../src/vm_dev");
+
 
 // @virtualize
 function evaluate(a = 1, b = 1) {

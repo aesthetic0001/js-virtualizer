@@ -1,4 +1,4 @@
-const JSVM = require("../src/vm_dev");
+
 const object = {
     a: 1,
     b: 2,

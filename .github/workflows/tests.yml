@@ -29,3 +29,6 @@ jobs:
 
       - name: Run Jest tests
         run: npm test
+
+      - name: Run Transpiler Tests
+        run: node ./tests/transpiler.js
