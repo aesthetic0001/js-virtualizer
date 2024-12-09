@@ -8,6 +8,48 @@ virtualization-based obfuscation for javascript
 
 virtualize.js is a proof-of-concept project which brings virtualization-based obfuscation to javascript. In this implementation, bytecode is fed to a virtual machine implemented javascript which runs on its own instruction set. A transpiler is included to convert individual **functions** to opcodes for the VM. It is important to note that virtualize.js is **not intended for use on entire programs, but rather for individual functions**! There will be a significant performance hit if you try to run an entire program through the VM.
 
+## Transpiler Support
+
+- [x] variables
+  - [x] proper scoping for let and const
+  - [x] all primitive types
+  - [x] object expressions
+  - [x] array expressions
+  - [x] object destructuring
+  - [x] array destructuring
+  - [x] assignment
+- [ ] functions
+  - [x] arrow functions
+  - [x] function expressions
+  - [x] function declarations
+  - [x] function calls (both external and internal) with proper `this` context
+  - [x] callbacks
+  - [x] awaiting functions (running async functions concurrently is not supported)
+  - [ ] a function accessing its own "this" property
+- [x] other statements
+  - [x] return statements
+  - [x] if/else/else if statements
+  - [x] for loops
+  - [x] for of loops
+  - [x] for in loops
+  - [x] while loops
+  - [x] switch cases
+  - [x] try/catch/finally
+  - [x] throw statements
+  - [x] continue statements
+  - [x] break statements
+- [x] misc
+  - [x] sequence expressions
+  - [x] template literals
+  - [x] ternary operators
+  - [x] logical operators
+  - [x] new expressions
+  - [x] unary operators (typeof, delete, etc.)
+  - [x] binary operators
+  - [x] update operators
+  - [x] comparison operators
+  - [x] bitwise operators
+
 ## Limitations
 
 - if you try to virtualize a program with async functions, it will not work as it introduces concurrency. the JSVM currently does not support async functions in the context of the whole program. however, you can use async functions within virtualized function as they have their own context
