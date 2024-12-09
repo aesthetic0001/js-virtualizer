@@ -1,5 +1,3 @@
-const JSVM = require("../src/vm_dev");
-
 // @virtualize
 function evaluate() {
     const value1 = false ? Math.random() : 1
