@@ -28,6 +28,7 @@ const resolveTryStatement = require("../transformations/TryStatement");
 const resolveThrowStatement = require("../transformations/ThrowStatement");
 const resolveSequenceExpression = require("../transformations/SequenceExpression");
 const resolveAssignmentExpression = require("../transformations/AssignmentExpression");
+const resolveSwitchStatement = require("../transformations/SwitchStatement");
 
 const TL_COUNT = 30
 
@@ -60,12 +61,18 @@ class FunctionBytecodeGenerator {
         this.activeVariables = {}
         this.takenLabels = new Set()
         // labels that need to be resolved
-        this.processStack = []
+        this.processStack = {
+            loops: [],
+            vfunc: [],
+            switch: []
+        }
         // a bunch of stacks which contain the current relevant label for each context
         this.contextLabels = {
             loops: [],
-            vfunc: []
+            vfunc: [],
+            switch: []
         }
+        this.activeLabels = []
         // like activeVariables but for functions
         // contains important information such as the IP of the function, register map for the arguments, dependencies, etc.
         this.activeVFunctions = {}
@@ -100,6 +107,7 @@ class FunctionBytecodeGenerator {
         this.resolveWhileStatement = resolveWhileStatement.bind(this)
         this.resolveFunctionDeclaration = resolveFunctionDeclaration.bind(this)
         this.resolveTryStatement = resolveTryStatement.bind(this)
+        this.resolveSwitchStatement = resolveSwitchStatement.bind(this)
     }
 
     dropVariable(variableName) {
@@ -249,14 +257,41 @@ class FunctionBytecodeGenerator {
 
     enterContext(type, label) {
         this.contextLabels[type].push(label)
+        this.activeLabels.push({
+            type,
+            label
+        })
+    }
+
+    contextProcess(type, opcode) {
+        this.processStack[type].push(opcode)
+    }
+
+    getProcessStack(type) {
+        return this.processStack[type]
     }
 
     exitContext(type) {
         this.contextLabels[type].pop()
+        this.activeLabels.pop()
     }
 
     getActiveLabel(type) {
         return this.contextLabels[type][this.contextLabels[type].length - 1]
+    }
+
+    findFirstLabelOfTypes(types) {
+        const lookingFor = new Set(types)
+        let idx = this.activeLabels.length - 1
+        while (idx >= 0) {
+            const {type, label} = this.activeLabels[idx]
+            if (lookingFor.has(type)) return {
+                label,
+                type
+            }
+            idx -= 1
+        }
+        return null
     }
 
     // this is probably an expression
@@ -279,6 +314,10 @@ class FunctionBytecodeGenerator {
             case 'IfStatement': {
                 this.resolveIfStatement(node)
                 break;
+            }
+            case 'SwitchStatement': {
+                this.resolveSwitchStatement(node)
+                break
             }
             case 'TryStatement': {
                 this.resolveTryStatement(node)
@@ -382,12 +421,13 @@ class FunctionBytecodeGenerator {
             }
             case 'BreakStatement': {
                 const opcode = new Opcode('JUMP_UNCONDITIONAL', encodeDWORD(0))
-                opcode.markForProcessing(this.getActiveLabel('loops'), {
+                const {label, type} = this.findFirstLabelOfTypes(['loops', 'switch'])
+                opcode.markForProcessing(label, {
                     type: 'break',
                     ip: this.chunk.getCurrentIP()
                 })
                 this.chunk.append(opcode)
-                this.processStack.push(opcode)
+                this.contextProcess(type, opcode)
                 break
             }
             case 'ContinueStatement': {
@@ -397,7 +437,7 @@ class FunctionBytecodeGenerator {
                     ip: this.chunk.getCurrentIP()
                 })
                 this.chunk.append(opcode)
-                this.processStack.push(opcode)
+                this.contextProcess('loops', opcode)
                 break
             }
             case 'ReturnStatement': {
@@ -408,8 +448,8 @@ class FunctionBytecodeGenerator {
                         type: 'vfunc_return',
                         computedOutput: out
                     })
-                    this.processStack.push(opcode)
                     this.chunk.append(opcode)
+                    this.contextProcess('vfunc', opcode)
                     this.chunk.append(new Opcode('END'))
                 } else {
                     this.chunk.append(new Opcode('SET_REF', this.outputRegister, out));

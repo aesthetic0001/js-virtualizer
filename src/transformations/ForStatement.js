@@ -34,8 +34,10 @@ function resolveForStatement(node) {
     this.chunk.append(new Opcode('JUMP_UNCONDITIONAL', encodeDWORD(startIP - this.chunk.getCurrentIP())))
     endJump.modifyArgs(testResult, encodeDWORD(this.chunk.getCurrentIP() - endJumpIP))
 
-    while (this.processStack.length) {
-        const top = this.processStack[this.processStack.length - 1]
+    const processStack = this.getProcessStack('loops')
+
+    while (processStack.length) {
+        const top = processStack[processStack.length - 1]
         if (top.label !== label) {
             break
         }
@@ -55,7 +57,7 @@ function resolveForStatement(node) {
                 throw new Error(`Unknown loop control type: ${type}`)
             }
         }
-        this.processStack.pop()
+        processStack.pop()
     }
 
     if (borrowed) this.freeTempLoad(testResult)
