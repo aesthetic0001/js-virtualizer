@@ -27,7 +27,7 @@ function resolveFunctionDeclaration(node, options) {
     const hasDefault = []
     const argRegisters = new Set()
 
-    const lastIsRest = params[params.length - 1].type === 'RestElement'
+    const lastIsRest = params.length && params[params.length - 1].type === 'RestElement'
 
     for (const param of params) {
         switch (param.type) {

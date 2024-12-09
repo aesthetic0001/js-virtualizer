@@ -1,9 +1,9 @@
-const JSVM = require("../src/vm_dev");
+
 
 // @virtualize
 function evaluate() {
     // const local1 = function () {
-    //     return Math.random();
+    //     return 0.5;
     // }
     let a = 0
     let b = 0

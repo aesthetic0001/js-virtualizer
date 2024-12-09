@@ -1,6 +1,5 @@
 const express = require('express');
 const axios = require('axios');
-const JSVM = require('../src/vm_dev');
 
 // @virtualize
 async function onGetProxy(req, res) {

@@ -46,8 +46,9 @@ class Opcode {
 }
 
 class VMChunk {
-    constructor() {
+    constructor(metadata) {
         this.code = [];
+        this.metadata = metadata ?? {}
     }
 
     append(opcode) {
@@ -64,6 +65,13 @@ class VMChunk {
             IP += opcode.toBytes().length;
         }
         return IP;
+    }
+
+    setMetadata(metadata) {
+        this.metadata = {
+            ...this.metadata,
+            ...metadata
+        }
     }
 
     toString() {
