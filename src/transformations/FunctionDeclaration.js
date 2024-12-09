@@ -78,8 +78,10 @@ function resolveFunctionDeclaration(node, options) {
         this.deferDrop(register)
     }
 
-    while (this.processStack.length) {
-        const top = this.processStack[this.processStack.length - 1]
+    const processStack = this.getProcessStack('vfunc')
+
+    while (processStack.length) {
+        const top = processStack[processStack.length - 1]
         if (top.label !== label) {
             break
         }
@@ -94,7 +96,7 @@ function resolveFunctionDeclaration(node, options) {
                 throw new Error(`Unknown vfunc process: ${type}`)
             }
         }
-        this.processStack.pop()
+        processStack.pop()
     }
     // if it did not return before this point, we need to return nothing
     this.chunk.append(new Opcode('SET_UNDEFINED', outputRegister))
