@@ -13,6 +13,7 @@ async function main() {
             console.log(`Skipping ${file}`)
             continue
         }
+        console.log(`Testing ${file}`)
         const sampleCode = fs.readFileSync(path.join(samplePath, file), "utf-8");
         const result = await transpile(sampleCode, {
             fileName: file,
@@ -28,7 +29,7 @@ async function main() {
         console.log(`--- Transpiled Output Begin ---`)
         console.log(transpiledOutput)
         console.log(`--- Transpiled Output End ---`)
-        assert(originalOutput === transpiledOutput)
+        assert(originalOutput === transpiledOutput, `Transpiler failed for ${file}!`)
     }
     console.log("All tests passed")
 }
