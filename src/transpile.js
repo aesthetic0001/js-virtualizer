@@ -10,16 +10,29 @@ const {FunctionBytecodeGenerator} = require("./utils/BytecodeGenerator");
 const escodegen = require("escodegen");
 const {log, LogData} = require("./utils/log");
 const zlib = require("node:zlib");
-const runPasses = require("./utils/runPasses");
 const fs = require("node:fs");
+const obfuscateCode = require("./postTranspilation/obfuscateCode");
+const obfuscateOpcodes = require("./postTranspilation/obfuscateOpcodes");
 
 const vmDist = fs.readFileSync(path.join(__dirname, './vm_dist.js'), 'utf-8');
 const encodings = ['base64']
 
 if (!fs.existsSync(path.join(__dirname, '../output'))) fs.mkdirSync(path.join(__dirname, '../output'))
 
-function virtualizeFunctions(code) {
-    const correspondingVM = path.join(__dirname, `../output/${crypto.randomBytes(8).toString('hex')}.vm.js`);
+async function transpile(code, options) {
+    options = options ?? {};
+    options.fileName = options.fileName ?? crypto.randomBytes(8).toString('hex')
+    options.writeOutput = options.writeOutput ?? true;
+    options.vmOutputPath = options.vmOutputPath ?? path.join(__dirname, `../output/${options.fileName}.vm.js`);
+    options.transpiledOutputPath = options.transpiledOutputPath ?? path.join(__dirname, `../output/${options.fileName}.virtualized.js`);
+    options.passes = (options.passes && new Set(options.passes)) ?? new Set([
+        "RemoveUnused",
+        "ObfuscateVM",
+        "ObfuscateTranspiled"
+    ]);
+
+    if (!path.isAbsolute(options.vmOutputPath)) options.vmOutputPath = path.join(process.cwd(), options.vmOutputPath);
+
     const encoding = encodings[crypto.randomInt(0, encodings.length)];
 
     const comments = [];
@@ -32,21 +45,11 @@ function virtualizeFunctions(code) {
         ranges: true,
     });
 
-    const vmAST = acorn.parse(vmDist, {
-        ecmaVersion: "latest",
-        sourceType: "module",
-        locations: true,
-        ranges: true,
-    })
+    const vmAST = acorn.parse(vmDist, {ecmaVersion: "latest", sourceType: "module"})
 
-    const requireInject = requireTemplate.replace("%VM_PATH%", correspondingVM)
+    const requireInject = requireTemplate.replace("%VM_PATH%", options.vmOutputPath)
 
-    ast.body.unshift(acorn.parse(requireInject, {
-        ecmaVersion: "latest",
-        sourceType: "module",
-        locations: true,
-        ranges: true,
-    }).body[0])
+    ast.body.unshift(acorn.parse(requireInject, {ecmaVersion: "latest", sourceType: "module"}).body[0])
 
     function needToVirtualize(node) {
         return comments.some((comment) => {
@@ -157,24 +160,40 @@ function virtualizeFunctions(code) {
         },
     });
 
-    runPasses(chunks, vmAST);
+    if (options.passes.has("RemoveUnused")) {
+        obfuscateOpcodes(chunks, vmAST)
+    }
 
     rewriteQueue.forEach(({result, node, chunk}) => {
         const bytecode = zlib.deflateSync(Buffer.from(chunk.toBytes())).toString(encoding);
         result = result.replace("%BYTECODE%", bytecode);
-        node.body.body = acorn.parse(result, {
-            ecmaVersion: "latest",
-            sourceType: "module",
-            locations: true,
-            ranges: true,
-        }).body[0].body.body
+        node.body.body = acorn.parse(result, {ecmaVersion: "latest", sourceType: "module"}).body[0].body.body
     })
 
-    const accompanyingVM = escodegen.generate(vmAST);
-    fs.writeFileSync(correspondingVM, accompanyingVM);
-    return escodegen.generate(ast);
+    let accompanyingVM = escodegen.generate(vmAST);
+    let transpiledResult = escodegen.generate(ast);
+
+    if (options.passes.has("ObfuscateVM")) {
+        accompanyingVM = await obfuscateCode(accompanyingVM)
+    }
+
+    if (options.passes.has("ObfuscateTranspiled")) {
+        transpiledResult = await obfuscateCode(transpiledResult)
+    }
+
+    if (options.writeOutput) {
+        fs.writeFileSync(options.vmOutputPath, accompanyingVM);
+        fs.writeFileSync(options.transpiledOutputPath, transpiledResult);
+    }
+
+    return {
+        vm: accompanyingVM,
+        transpiled: transpiledResult,
+        vmOutputPath: options.writeOutput ? options.vmOutputPath : null,
+        transpiledOutputPath: options.writeOutput ? options.transpiledOutputPath : null
+    }
 }
 
 module.exports = {
-    virtualizeFunctions
+    transpile
 }

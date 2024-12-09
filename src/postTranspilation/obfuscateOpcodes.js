@@ -1,9 +1,8 @@
-const Pass = require("../utils/Pass");
 const {shuffle} = require("../utils/random");
 const {opNames} = require("../utils/constants");
 const {log} = require("../utils/log");
 
-function removeUnusedOpcodes(VMChunks, vmAST) {
+function obfuscateOpcodes(VMChunks, vmAST) {
     const usedOps = new Set()
 
     for (const VMChunk of VMChunks) {
@@ -49,6 +48,4 @@ function removeUnusedOpcodes(VMChunks, vmAST) {
     }
 }
 
-const RemoveUnused = new Pass('Remove Unused Opcodes', removeUnusedOpcodes, 0);
-
-module.exports = RemoveUnused
+module.exports = obfuscateOpcodes
