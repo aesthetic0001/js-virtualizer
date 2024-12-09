@@ -20,7 +20,10 @@ if (!fs.existsSync(path.join(__dirname, '../output'))) fs.mkdirSync(path.join(__
 
 function virtualizeFunctions(code) {
     const correspondingVM = path.join(__dirname, `../output/${crypto.randomBytes(8).toString('hex')}.vm.js`);
+    const encoding = encodings[crypto.randomInt(0, encodings.length)];
+
     const comments = [];
+
     const ast = acorn.parse(code, {
         ecmaVersion: "latest",
         sourceType: "module",
@@ -69,12 +72,12 @@ function virtualizeFunctions(code) {
     }
 
     const chunks = []
+    const rewriteQueue = []
 
     function virtualizeFunction(node) {
         log(new LogData(`Virtualizing Function "${node.id.name}"`, 'info', false));
         const dependencies = analyzeScope(ast, node);
         const functionBody = node.body.body;
-        const encoding = encodings[crypto.randomInt(0, encodings.length)];
         const regToDep = {}
 
         const generator = new FunctionBytecodeGenerator(functionBody);
@@ -119,7 +122,6 @@ function virtualizeFunctions(code) {
         generator.generate();
         chunks.push(generator.chunk)
 
-        const bytecode = zlib.deflateSync(Buffer.from(generator.getBytecode())).toString(encoding);
         const virtualizedFunction = functionWrapperTemplate
             .replace("%FN_PREFIX%", node.async ? "async " : "")
             .replace("%FUNCTION_NAME%", node.id.name)
@@ -127,7 +129,6 @@ function virtualizeFunctions(code) {
             .replace("%ENCODING%", encoding)
             .replace("%DEPENDENCIES%", JSON.stringify(regToDep).replace(/"/g, ""))
             .replace("%OUTPUT_REGISTER%", generator.outputRegister.toString())
-            .replace("%BYTECODE%", bytecode)
             .replace("%RUNCMD%", node.async ? "await VM.runAsync()" : "VM.run()");
 
         const dependentTemploads = []
@@ -141,25 +142,34 @@ function virtualizeFunctions(code) {
         }
         log(new LogData(`Successfully Virtualized Function "${node.id.name}"`, 'success', false));
         log(`Dependencies: ${JSON.stringify(dependencies)}`);
-        const replacedBody = acorn.parse(virtualizedFunction, {
-            ecmaVersion: "latest",
-            sourceType: "module",
-            locations: true,
-            ranges: true,
-        });
-
-        return replacedBody.body[0].body.body
+        rewriteQueue.push({
+            result: virtualizedFunction,
+            node,
+            chunk: generator.chunk
+        })
     }
 
     walk.simple(ast, {
         FunctionDeclaration(node) {
             if (needToVirtualize(node)) {
-                node.body.body = virtualizeFunction(node);
+                virtualizeFunction(node);
             }
         },
     });
 
     runPasses(chunks, vmAST);
+
+    rewriteQueue.forEach(({result, node, chunk}) => {
+        const bytecode = zlib.deflateSync(Buffer.from(chunk.toBytes())).toString(encoding);
+        result = result.replace("%BYTECODE%", bytecode);
+        node.body.body = acorn.parse(result, {
+            ecmaVersion: "latest",
+            sourceType: "module",
+            locations: true,
+            ranges: true,
+        }).body[0].body.body
+    })
+
     const accompanyingVM = escodegen.generate(vmAST);
     fs.writeFileSync(correspondingVM, accompanyingVM);
     return escodegen.generate(ast);

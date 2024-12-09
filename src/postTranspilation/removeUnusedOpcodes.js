@@ -1,6 +1,7 @@
 const Pass = require("../utils/Pass");
 const {shuffle} = require("../utils/random");
 const {opNames} = require("../utils/constants");
+const {log} = require("../utils/log");
 
 function removeUnusedOpcodes(VMChunks, vmAST) {
     const usedOps = new Set()
@@ -21,15 +22,16 @@ function removeUnusedOpcodes(VMChunks, vmAST) {
     }
     shuffle(newOpnames)
 
-    for (const VMChunk of VMChunks) {
-        const remapped = {}
+    const remapped = {}
 
-        for (let i = 0; i < newOpnames.length; i++) {
-            if (usedOps.has(newOpnames[i])) {
-                remapped[newOpnames[i]] = i
-            }
+    for (let i = 0; i < newOpnames.length; i++) {
+        if (usedOps.has(newOpnames[i])) {
+            log(`Remapping ${newOpnames[i]} to ${i}`)
+            remapped[newOpnames[i]] = i
         }
+    }
 
+    for (const VMChunk of VMChunks) {
         VMChunk.code.forEach(opcode => {
             opcode.opcode = Buffer.from([remapped[opcode.name]])
         })
