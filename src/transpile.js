@@ -9,7 +9,8 @@ const {FunctionBytecodeGenerator} = require("./utils/BytecodeGenerator");
 const escodegen = require("escodegen");
 const {log, LogData} = require("./utils/log");
 const zlib = require("node:zlib");
-const {needsCleanup} = require("./utils/constants");
+const runPasses = require("./utils/runPasses");
+const fs = require("node:fs");
 const encodings = ['base64']
 
 function virtualizeFunctions(code) {
@@ -93,6 +94,8 @@ function virtualizeFunctions(code) {
 
         generator.generate();
 
+        runPasses(generator.chunk);
+
         const bytecode = zlib.deflateSync(Buffer.from(generator.getBytecode())).toString(encoding);
         const virtualizedFunction = functionWrapperTemplate
             .replace("%FN_PREFIX%", node.async ? "async " : "")
@@ -121,6 +124,12 @@ function virtualizeFunctions(code) {
             locations: true,
             ranges: true,
         });
+
+        const accompanyingVM = escodegen.generate(generator.chunk.vmAST);
+
+        if (!fs.existsSync(path.join(__dirname, '../output'))) fs.mkdirSync(path.join(__dirname, '../output'))
+        fs.writeFileSync(path.join(__dirname, `../output/${node.id.name}.vm.js`), accompanyingVM);
+
         return replacedBody.body[0].body.body
     }
 

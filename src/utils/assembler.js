@@ -1,5 +1,11 @@
+const acorn = require('acorn');
+const fs = require("node:fs");
+const path = require("node:path");
+
 const {opcodes} = require("./constants");
 const {log} = require("./log");
+
+const vmDist = fs.readFileSync(path.join(__dirname, '../vm_dist.js'), 'utf-8');
 
 class Opcode {
     constructor(name, ...args) {
@@ -46,8 +52,15 @@ class Opcode {
 }
 
 class VMChunk {
-    constructor() {
+    constructor(metadata) {
         this.code = [];
+        this.vmAST = acorn.parse(vmDist, {
+            ecmaVersion: "latest",
+            sourceType: "module",
+            locations: true,
+            ranges: true,
+        })
+        this.metadata = metadata ?? {}
     }
 
     append(opcode) {
@@ -64,6 +77,13 @@ class VMChunk {
             IP += opcode.toBytes().length;
         }
         return IP;
+    }
+
+    setMetadata(metadata) {
+        this.metadata = {
+            ...this.metadata,
+            ...metadata
+        }
     }
 
     toString() {
