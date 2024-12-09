@@ -13,7 +13,6 @@
   "dependencies": {
     "acorn": "^8.14.0",
     "acorn-walk": "^8.3.4",
-    "axios": "^1.7.9",
     "escodegen": "^2.1.0",
     "eslint-scope": "^8.2.0"
   }
