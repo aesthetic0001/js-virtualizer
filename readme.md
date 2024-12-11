@@ -103,9 +103,11 @@ main();
 
 ## Limitations
 
-- if you try to virtualize a program with async functions, it will not work as it introduces concurrency. the JSVM currently does not support async functions in the context of the whole program. however, you can use async functions within virtualized function as they have their own context
+> [!WARNING]  
+> It is highly recommended that you modify **and** obfuscate the [vm_dist.js](src/vm_dist.js) file before using it in a production environment. For instance, including the opcode names in the VM makes it more trivial to reverse engineer the workings of the virtualized code
+
+- if you try to virtualize a program with async functions running concurrently, it will not work as the transpiler & virtual machine were not designed with concurrency in mind (it is a proof-of-concept, after all). the JSVM currently does not support async functions in the context of the whole program. however, you can use async functions within virtualized function as they have their own context
 - performance is not guaranteed. virtualize.js is not intended for use in high-performance applications. it is intended for use in applications where you need to protect your code from reverse engineering
-- no other obfuscation techniques are applied to the input code. virtualize.js is not intended to be used as a standalone obfuscation tool, but rather to be used in conjunction with other obfuscation techniques
 - given the virtual machine, the virtualized function is pretty trivial to reverse engineer. it is recommended that the virtual machine class is obfuscated before use
 - declaring variables by `var` is not supported. it is not guaranteed that the variable will behave as expected. you should use `let` or `const` instead
 
@@ -131,3 +133,10 @@ main();
   - ~~async would require complex register management. the registers need to be restored after calling the async function, but some registers may have been mutated by the program before the resolution.~~ this can be mitigated as we can just never drop any variables and keep them for the entire lifetime of the function. however, this would still require async context switching
 - [ ] allow for declaration of classes (i don't know why you would want to init a class in a function but this is still a limitation of the current implementation)
 - [ ] obfuscation passes/optimization passes
+- [ ] obfuscation techniques
+  - [x] opcode shuffling and minification (remove unused opcodes, rename opcodes, etc.)
+  - [ ] argument scrambling (change the order of arguments in function calls)
+  - [ ] string encryption
+  - [ ] dead code injection
+  - [ ] VM memory protection (encrypt data in the registers and restore it just in time. this should probably be done mostly by the VM)
+  - [ ] bytecode integrity checks
