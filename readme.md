@@ -36,9 +36,10 @@ async function main() {
     function virtualize() {
       console.log("hello world from the JSVM");
     }
+    virtualize()
 `, {
     // the filename of the code; will be used as the default output filename
-    fileName: targetSample,
+    fileName: 'example.js',
     // whether or not the transpiler should directly write the output to a file
     writeOutput: true,
     // the path to write the vm for the transpiled code to
