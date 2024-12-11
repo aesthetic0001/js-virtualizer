@@ -1,12 +1,12 @@
-# virtualize.js
+# js-virtualizer
 
 virtualization-based obfuscation for javascript
 
 ---
 
-![Unit Tests](https://github.com/aesthetic0001/virtualize.js/actions/workflows/tests.yml/badge.svg)
+![Unit Tests](https://github.com/aesthetic0001/js-virtualizer/actions/workflows/tests.yml/badge.svg)
 
-virtualize.js is a proof-of-concept project which brings virtualization-based obfuscation to javascript. In this implementation, bytecode is fed to a virtual machine implemented javascript which runs on its own instruction set. A transpiler is included to convert individual **functions** to opcodes for the VM. It is important to note that virtualize.js is **not intended for use on entire programs, but rather for individual functions**! There will be a significant performance hit if you try to run an entire program through the VM.
+js-virtualizer is a proof-of-concept project which brings virtualization-based obfuscation to javascript. In this implementation, bytecode is fed to a virtual machine implemented javascript which runs on its own instruction set. A transpiler is included to convert individual **functions** to opcodes for the VM. It is important to note that js-virtualizer is **not intended for use on entire programs, but rather for individual functions**! There will be a significant performance hit if you try to run an entire program through the VM.
 
 ## Usage
 
@@ -28,7 +28,7 @@ function notVirtualized() {
 > See [examples/basic.js](examples/basic.js) for a full example and the samples folder for some sample code you can try virtualizing.
 
 ```javascript
-const {transpile} = require("../src/transpile");
+const {transpile} = require("js-virtualizer");
 
 async function main() {
   const result = await transpile(`
@@ -106,8 +106,9 @@ main();
 > [!WARNING]  
 > It is highly recommended that you modify **and** obfuscate the [vm_dist.js](src/vm_dist.js) file before using it in a production environment. For instance, including the opcode names in the VM makes it more trivial to reverse engineer the workings of the virtualized code
 
+- this project is targeting server-side javascript runtimes such as node.js, and has not been tested in the browser. however, it should be trivial to get it working in the browser by removing the `require` statements and replacing them with the appropriate browser equivalents in `vm_dist.js`
 - if you try to virtualize a program with async functions running concurrently, it will not work as the transpiler & virtual machine were not designed with concurrency in mind (it is a proof-of-concept, after all). the JSVM currently does not support async functions in the context of the whole program. however, you can use async functions within virtualized function as they have their own context
-- performance is not guaranteed. virtualize.js is not intended for use in high-performance applications. it is intended for use in applications where you need to protect your code from reverse engineering
+- performance is not guaranteed. js-virtualizer is not intended for use in high-performance applications. it is intended for use in applications where you need to protect your code from reverse engineering
 - given the virtual machine, the virtualized function is pretty trivial to reverse engineer. it is recommended that the virtual machine class is obfuscated before use
 - declaring variables by `var` is not supported. it is not guaranteed that the variable will behave as expected. you should use `let` or `const` instead
 
