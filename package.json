@@ -1,6 +1,6 @@
 {
   "name": "js-virtualizer",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "author": "aesthetic0001",
   "description": "Virtualization-based obfuscation for JavaScript",
   "keywords": [
