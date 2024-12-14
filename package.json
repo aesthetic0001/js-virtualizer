@@ -8,6 +8,10 @@
     "virtualization",
     "transpiler"
   ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/aesthetic0001/js-virtualizer.git"
+  },
   "license": "MIT",
   "main": "src/transpile.js",
   "scripts": {
