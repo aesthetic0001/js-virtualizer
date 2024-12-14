@@ -3,6 +3,11 @@
   "version": "1.0.1",
   "author": "aesthetic0001",
   "description": "Virtualization-based obfuscation for JavaScript",
+  "keywords": [
+    "obfuscation",
+    "virtualization",
+    "transpiler"
+  ],
   "license": "MIT",
   "main": "src/transpile.js",
   "scripts": {
