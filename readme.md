@@ -48,9 +48,9 @@ async function main() {
     transpiledOutputPath: "./output.js",
     // the passes apply to the result before returning
     passes: [
-      "RemoveUnused",
-      "ObfuscateVM",
-      "ObfuscateTranspiled"
+      "RemoveUnused", // whether or not to remove unused opcodes from the instruction set
+      "ObfuscateVM", // whether or not to obfuscate the VM code through js-confuser
+      "ObfuscateTranspiled" // whether or not to obfuscate the transpiled code through js-confuser
     ]
   });
 
