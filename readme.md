@@ -4,7 +4,7 @@ virtualization-based obfuscation for javascript
 
 ---
 
-![Unit Tests](https://github.com/aesthetic0001/js-virtualizer/actions/workflows/tests.yml/badge.svg)
+![Unit Tests](https://github.com/aesthetic0001/js-virtualizer/actions/workflows/tests.yml/badge.svg) ![npm downloads](https://img.shields.io/npm/dm/js-virtualizer) ![npm version](https://img.shields.io/npm/v/js-virtualizer) ![License](https://img.shields.io/npm/l/js-virtualizer) 
 
 js-virtualizer is a proof-of-concept project which brings virtualization-based obfuscation to javascript. In this implementation, bytecode is fed to a virtual machine implemented in javascript which runs on its own instruction set. A transpiler is included to convert select **functions** to opcodes for the VM. It is important to note that js-virtualizer is **not intended for use on entire programs, but rather for specified functions**! There will be a significant performance hit if you try to run an entire program through the VM (it is also not practical to do so as truely concurrent async is not supported by the current implementation, so everything in the program would have to run synchronously)
 
@@ -59,6 +59,16 @@ async function main() {
 
 main();
 ```
+### Options for `transpile`
+
+- `fileName` (string, default: `[randomly generated]`) - the filename of the code; will be used as the default output filename where the transpiled code & the VM will be written to
+- `writeOutput` (bool, default `true`) - whether or not the transpiler should directly write the output to a file
+- `vmOutputPath` (string, default: `node_modules/js-virtualizer/output/[name].js`) - the path to write the vm for the transpiled code to
+- `transpiledOutputPath` (string, default: `node_modules/js-virtualizer/output/[name].virtualized.js`) - the path to write the transpiled code to
+- `passes` (array, default: `["RemoveUnused", "ObfuscateVM", "ObfuscateTranspiled"]`) - an array of passes to apply to the result before returning and writing to a file
+  - `RemoveUnused` - whether or not to remove unused opcodes from the instruction set
+  - `ObfuscateVM` - whether or not to obfuscate the VM code through js-confuser
+  - `ObfuscateTranspiled` - whether or not to obfuscate the transpiled code through js-confuser
 
 ## Transpiler Support
 
